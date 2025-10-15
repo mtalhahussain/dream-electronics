@@ -61,7 +61,6 @@
                 </div>
             </div>
         </form>
-        
     </div>
     
     <div class="card-body p-0" id="productsContainer">
