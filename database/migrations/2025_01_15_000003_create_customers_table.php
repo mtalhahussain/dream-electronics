@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('customers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('cnic', 13)->unique();
+            $table->string('cnic', 15)->unique();
             $table->string('phone', 20);
             $table->text('address');
             $table->string('email')->nullable();
@@ -23,6 +23,8 @@ return new class extends Migration
 
     public function down(): void
     {
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('customers');
+        Schema::enableForeignKeyConstraints();
     }
 };

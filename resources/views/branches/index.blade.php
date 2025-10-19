@@ -6,7 +6,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>Branches Management</h2>
     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#branchModal">
-        <i class="fas fa-plus"></i> Add New Branch
+        <i class="bi bi-plus-lg"></i> Add New Branch
     </button>
 </div>
 
@@ -51,8 +51,14 @@
                             <td>
                                 <button type="button" class="btn btn-sm btn-outline-primary" 
                                         onclick="editBranch({{ $branch->id }}, '{{ $branch->name }}', '{{ $branch->location }}', '{{ $branch->manager_name }}', '{{ $branch->phone }}', {{ $branch->is_active ? 'true' : 'false' }})">
-                                    <i class="fas fa-edit"></i> Edit
+                                    <i class="bi bi-pencil"></i> Edit
                                 </button>
+                                @can('delete-branches')
+                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                        onclick="deleteBranch({{ $branch->id }}, '{{ $branch->name }}')">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                                @endcan
                             </td>
                         </tr>
                         @endforeach
@@ -63,7 +69,7 @@
             {{ $branches->links() }}
         @else
             <div class="text-center py-5">
-                <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                <i class="bi bi-building fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">No branches found</h5>
                 <p class="text-muted">Start by adding your first branch location.</p>
             </div>
@@ -147,7 +153,39 @@ function editBranch(id, name, location, manager_name, phone, is_active) {
     new bootstrap.Modal(document.getElementById('branchModal')).show();
 }
 
-// Reset form when modal is hidden
+function deleteBranch(id, name) {
+    if (confirm(`Are you sure you want to delete the branch "${name}"? This action cannot be undone.`)) {
+        // Get CSRF token
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                     document.querySelector('input[name="_token"]')?.value ||
+                     '{{ csrf_token() }}';
+        
+        fetch(`/branches/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': token
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showToast(data.message || 'Failed to delete branch', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An unexpected error occurred while deleting the branch', 'error');
+        });
+    }
+}
+
 document.getElementById('branchModal').addEventListener('hidden.bs.modal', function () {
     isEditing = false;
     document.getElementById('modalTitle').textContent = 'Add New Branch';
@@ -156,7 +194,6 @@ document.getElementById('branchModal').addEventListener('hidden.bs.modal', funct
     clearValidationErrors();
 });
 
-// Form submission
 document.getElementById('branchForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
@@ -169,6 +206,8 @@ document.getElementById('branchForm').addEventListener('submit', function(e) {
     clearValidationErrors();
     
     const formData = new FormData(this);
+    const isActive = document.getElementById('is_active').checked ? 1 : 0;
+    formData.set('is_active', isActive);
     const branchId = document.getElementById('branchId').value;
     
     const url = isEditing ? `/branches/${branchId}` : '/branches';
@@ -188,7 +227,7 @@ document.getElementById('branchForm').addEventListener('submit', function(e) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showAlert('success', data.message);
+            showToast(data.message, 'success');
             bootstrap.Modal.getInstance(document.getElementById('branchModal')).hide();
             setTimeout(() => {
                 window.location.reload();
@@ -197,13 +236,13 @@ document.getElementById('branchForm').addEventListener('submit', function(e) {
             if (data.errors) {
                 showValidationErrors(data.errors);
             } else {
-                showAlert('danger', data.message || 'An error occurred');
+                showToast(data.message || 'An error occurred', 'error');
             }
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showAlert('danger', 'An unexpected error occurred');
+        showToast('An unexpected error occurred', 'error');
     })
     .finally(() => {
         submitBtn.disabled = false;
@@ -233,18 +272,6 @@ function showValidationErrors(errors) {
             errorDiv.textContent = messages[0];
         }
     }
-}
-
-function showAlert(type, message) {
-    const alertHtml = `
-        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `;
-    
-    const alertContainer = document.querySelector('.container-fluid');
-    alertContainer.insertAdjacentHTML('afterbegin', alertHtml);
 }
 </script>
 @endpush

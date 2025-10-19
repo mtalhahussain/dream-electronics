@@ -21,6 +21,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit-products',
             'delete-products',
             
+            // Category permissions
+            'view-categories',
+            'create-categories',
+            'edit-categories',
+            'delete-categories',
+            
             // Customer permissions
             'view-customers',
             'create-customers',
@@ -76,11 +82,12 @@ class RolesAndPermissionsSeeder extends Seeder
             $adminRole->givePermissionTo(Permission::all());
         }
 
-        // Manager role - has most permissions except system management
+                // Manager role - has most permissions except system management
         $managerRole = Role::firstOrCreate(['name' => 'manager']);
         if ($managerRole->permissions()->count() === 0) {
             $managerRole->givePermissionTo([
                 'view-products', 'create-products', 'edit-products',
+                'view-categories', 'create-categories', 'edit-categories',
                 'view-customers', 'create-customers', 'edit-customers',
                 'view-sales', 'create-sales', 'edit-sales', 'pay-installments',
                 'view-finance',

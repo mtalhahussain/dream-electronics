@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('branches', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->text('address');
+            $table->text('location');
             $table->string('phone');
             $table->string('manager_name');
             $table->boolean('is_active')->default(true);

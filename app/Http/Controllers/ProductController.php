@@ -21,7 +21,12 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
-        $query = Product::with('branch');
+        $query = Product::with(['branch']);
+
+        // Only load category relationship for products that have category_id
+        $query->with(['category' => function($q) {
+            $q->select('id', 'name', 'color', 'icon');
+        }]);
 
         // Apply filters
         if ($request->filled('branch_id')) {
@@ -34,6 +39,10 @@ class ProductController extends Controller
             } elseif ($request->status === 'inactive') {
                 $query->where('active', false);
             }
+        }
+
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
         }
 
         if ($request->filled('q')) {
@@ -56,6 +65,7 @@ class ProductController extends Controller
             });
         }
 
+        // Legacy category filter support (for old static categories)
         if ($request->filled('category')) {
             $query->where('category', $request->category);
         }
@@ -72,6 +82,9 @@ class ProductController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $products->items(),
+                'permissions' => [
+                    'can_delete' => auth()->user()->can('delete-products')
+                ],
                 'pagination' => [
                     'current_page' => $products->currentPage(),
                     'last_page' => $products->lastPage(),
@@ -98,7 +111,7 @@ class ProductController extends Controller
             $data = $request->validated();
 
             if ($request->hasFile('purchase_invoice')) {
-                $data['purchase_invoice_path'] = $request->file('purchase_invoice')
+                $data['purchase_invoice'] = $request->file('purchase_invoice')
                     ->store('product-invoices', 'public');
             }
 
@@ -149,11 +162,11 @@ class ProductController extends Controller
             // Handle file upload
             if ($request->hasFile('purchase_invoice')) {
                 // Delete old file if exists
-                if ($product->purchase_invoice_path) {
-                    Storage::disk('public')->delete($product->purchase_invoice_path);
+                if ($product->purchase_invoice) {
+                    Storage::disk('public')->delete($product->purchase_invoice);
                 }
                 
-                $data['purchase_invoice_path'] = $request->file('purchase_invoice')
+                $data['purchase_invoice'] = $request->file('purchase_invoice')
                     ->store('product-invoices', 'public');
             }
 
@@ -186,28 +199,53 @@ class ProductController extends Controller
         }
     }
 
-    public function destroy(Product $product)
+    public function destroy(Request $request, Product $product)
     {
         try {
             // Check if product has sales
             if ($product->saleItems()->exists()) {
-                return redirect()->back()
-                    ->withErrors(['error' => 'Cannot delete product with existing sales']);
+                $message = 'Cannot delete product with existing sales';
+                
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $message
+                    ], 422);
+                }
+                
+                return redirect()->back()->withErrors(['error' => $message]);
             }
 
             // Delete file if exists
-            if ($product->purchase_invoice_path) {
-                Storage::disk('public')->delete($product->purchase_invoice_path);
+            if ($product->purchase_invoice) {
+                Storage::disk('public')->delete($product->purchase_invoice);
             }
 
+            $productName = $product->name;
             $product->delete();
 
-            return redirect()->route('products.index')
-                ->with('success', 'Product deleted successfully');
+            $message = "Product '{$productName}' deleted successfully";
+            
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message
+                ]);
+            }
+
+            return redirect()->route('products.index')->with('success', $message);
 
         } catch (\Exception $e) {
-            return redirect()->back()
-                ->withErrors(['error' => 'Failed to delete product: ' . $e->getMessage()]);
+            $message = 'Failed to delete product: ' . $e->getMessage();
+            
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message
+                ], 500);
+            }
+            
+            return redirect()->back()->withErrors(['error' => $message]);
         }
     }
 

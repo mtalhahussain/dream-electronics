@@ -2,178 +2,352 @@
 
 @section('title', 'Create Sale')
 
+@push('styles')
+<style>
+    .sale-summary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .item-card {
+        border: 2px solid #e5e7eb;
+        transition: all 0.3s ease;
+    }
+    
+    .item-card:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.1);
+    }
+    
+    .remove-item:hover {
+        transform: scale(1.05);
+    }
+    
+    .calculation-card {
+        background: linear-gradient(45deg, #f8fafc, #e2e8f0);
+        border: 1px solid #cbd5e1;
+    }
+    
+    .btn-add-item {
+        background: linear-gradient(45deg, #10b981, #059669);
+        border: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-add-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        background: linear-gradient(45deg, #059669, #047857);
+    }
+</style>
+@endpush
+
 @section('content')
-<div class="bg-white rounded-lg shadow p-6">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">Create New Sale</h1>
-        <a href="{{ route('sales.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
-            Back to Sales
-        </a>
-    </div>
-
-    <form id="saleForm" action="{{ route('sales.store') }}" method="POST" class="space-y-6">
-        @csrf
-        
-        <!-- Basic Information -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Branch Selection -->
-            <div>
-                <label for="branch_id" class="block text-sm font-medium text-gray-700 mb-1">Branch</label>
-                <select name="branch_id" id="branch_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                    <option value="">Select Branch</option>
-                    @foreach($branches as $branch)
-                        <option value="{{ $branch->id }}" {{ old('branch_id') == $branch->id ? 'selected' : '' }}>
-                            {{ $branch->name }}
-                        </option>
-                    @endforeach
-                </select>
-                @error('branch_id')
-                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <!-- Customer Selection -->
-            <div>
-                <label for="customer_id" class="block text-sm font-medium text-gray-700 mb-1">Customer</label>
-                <select name="customer_id" id="customer_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                    <option value="">Select Customer</option>
-                    @foreach($customers as $customer)
-                        <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
-                            {{ $customer->name }} - {{ $customer->phone }}
-                        </option>
-                    @endforeach
-                </select>
-                @error('customer_id')
-                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <!-- Duration -->
-            <div>
-                <label for="duration_months" class="block text-sm font-medium text-gray-700 mb-1">Installment Duration</label>
-                <select name="duration_months" id="duration_months" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                    <option value="">Select Duration</option>
-                    <option value="6" {{ old('duration_months') == '6' ? 'selected' : '' }}>6 Months</option>
-                    <option value="10" {{ old('duration_months') == '10' ? 'selected' : '' }}>10 Months</option>
-                    <option value="12" {{ old('duration_months') == '12' ? 'selected' : '' }}>12 Months</option>
-                </select>
-                @error('duration_months')
-                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                @enderror
+<div class="row">
+    <div class="col-12">
+        <!-- Header -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="card-title mb-0">
+                        <i class="bi bi-cart-plus me-2 text-primary"></i>Create New Sale
+                    </h4>
+                    <p class="text-muted mb-0 mt-1">Create a new sale with installment plan</p>
+                </div>
+                <a href="{{ route('sales.index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Back to Sales
+                </a>
             </div>
         </div>
 
-        <!-- Sale Items -->
-        <div>
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-gray-900">Sale Items</h3>
-                <button type="button" id="addItem" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg">
-                    Add Item
-                </button>
-            </div>
-
-            <div id="itemsContainer" class="space-y-4">
-                <!-- Items will be added here dynamically -->
-            </div>
+        <form id="saleForm" action="{{ route('sales.store') }}" method="POST">
+            @csrf
             
-            @error('items')
-                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-            @enderror
-        </div>
+            <div class="row">
+                <!-- Main Sale Form -->
+                <div class="col-lg-8">
+                    <!-- Customer & Branch Selection -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white border-bottom">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-person-check me-2"></i>Sale Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="form-floating">
+                                        <select name="branch_id" id="branch_id" class="form-select @error('branch_id') is-invalid @enderror" required>
+                                            <option value="">Select Branch</option>
+                                            @foreach($branches as $branch)
+                                                <option value="{{ $branch->id }}" {{ old('branch_id') == $branch->id ? 'selected' : '' }}
+                                                    data-location="{{ $branch->location }}" data-manager="{{ $branch->manager_name }}">
+                                                    {{ $branch->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <label for="branch_id">Branch <span class="text-danger">*</span></label>
+                                        @error('branch_id')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div id="branchInfo" class="small text-muted mt-1"></div>
+                                </div>
 
-        <!-- Pricing Information -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 bg-gray-50 p-4 rounded-lg">
-            <div>
-                <label for="subtotal" class="block text-sm font-medium text-gray-700 mb-1">Subtotal</label>
-                <input type="text" id="subtotal" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100" readonly>
+                                <div class="col-md-5">
+                                    <div class="form-floating">
+                                        <select name="customer_id" id="customer_id" class="form-select @error('customer_id') is-invalid @enderror" required>
+                                            <option value="">Select Customer</option>
+                                            @foreach($customers as $customer)
+                                                <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}
+                                                    data-phone="{{ $customer->phone }}" data-cnic="{{ $customer->cnic }}" 
+                                                    data-branch="{{ $customer->branch?->name }}">
+                                                    {{ $customer->name }} - {{ $customer->phone }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <label for="customer_id">Customer <span class="text-danger">*</span></label>
+                                        @error('customer_id')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div id="customerInfo" class="small text-muted mt-1"></div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-floating">
+                                        <select name="duration_months" id="duration_months" class="form-select @error('duration_months') is-invalid @enderror" required>
+                                            <option value="">Select Duration</option>
+                                            <option value="6" {{ old('duration_months') == '6' ? 'selected' : '' }}>6 Months</option>
+                                            <option value="10" {{ old('duration_months') == '10' ? 'selected' : '' }}>10 Months</option>
+                                            <option value="12" {{ old('duration_months') == '12' ? 'selected' : '' }}>12 Months</option>
+                                        </select>
+                                        <label for="duration_months">Duration <span class="text-danger">*</span></label>
+                                        @error('duration_months')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sale Items -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-basket me-2"></i>Sale Items
+                            </h5>
+                            <button type="button" id="addItem" class="btn btn-success btn-add-item">
+                                <i class="bi bi-plus-circle me-2"></i>Add Item
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="itemsContainer" class="space-y-3">
+                                <!-- Items will be added here dynamically -->
+                            </div>
+                            @error('items')
+                                <div class="alert alert-danger mt-3">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>{{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <!-- Additional Information -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white border-bottom">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-calendar me-2"></i>Payment Schedule
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="start_date" class="form-label">Installment Start Date</label>
+                                    <input type="date" name="start_date" id="start_date" 
+                                        value="{{ old('start_date', date('Y-m-d', strtotime('+1 month'))) }}" 
+                                        class="form-control @error('start_date') is-invalid @enderror">
+                                    <div class="form-text">First installment due date</div>
+                                    @error('start_date')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Monthly Installment</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">Rs.</span>
+                                        <input type="text" id="monthlyInstallment" class="form-control bg-light" readonly>
+                                    </div>
+                                    <div class="form-text">Calculated automatically</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sale Summary Sidebar -->
+                <div class="col-lg-4">
+                    <div class="sticky-top" style="top: 20px;">
+                        <!-- Calculation Summary -->
+                        <div class="card border-0 shadow-sm mb-4 calculation-card">
+                            <div class="card-header sale-summary text-center">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-calculator me-2"></i>Sale Summary
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <label for="subtotal" class="form-label small">Subtotal</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">Rs.</span>
+                                            <input type="text" id="subtotal" class="form-control bg-light" readonly>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-6">
+                                        <label for="discount_percent" class="form-label small">Discount %</label>
+                                        <input type="number" name="discount_percent" id="discount_percent" 
+                                            min="0" max="100" step="0.01" value="{{ old('discount_percent', 0) }}" 
+                                            class="form-control form-control-sm @error('discount_percent') is-invalid @enderror">
+                                        @error('discount_percent')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    
+                                    <div class="col-6">
+                                        <label for="discountAmount" class="form-label small">Discount Amount</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">Rs.</span>
+                                            <input type="text" id="discountAmount" class="form-control bg-light" readonly>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-6">
+                                        <label for="total_price" class="form-label small">Total Price</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">Rs.</span>
+                                            <input type="number" name="total_price" id="total_price" step="0.01" 
+                                                class="form-control bg-light @error('total_price') is-invalid @enderror" readonly>
+                                        </div>
+                                        @error('total_price')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <hr>
+                                        <label for="advance_received" class="form-label small">Advance Payment</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">Rs.</span>
+                                            <input type="number" name="advance_received" id="advance_received" 
+                                                min="0" step="0.01" value="{{ old('advance_received', 0) }}" 
+                                                class="form-control @error('advance_received') is-invalid @enderror">
+                                        </div>
+                                        @error('advance_received')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    
+                                    <div class="col-6">
+                                        <label class="form-label small">Remaining Balance</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">Rs.</span>
+                                            <input type="text" id="remainingBalance" class="form-control bg-warning bg-opacity-25" readonly>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-6">
+                                        <label class="form-label small">Status</label>
+                                        <div id="paymentStatus" class="form-control-sm text-center">
+                                            <span class="badge bg-warning">Pending</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <button type="submit" id="submitBtn" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-check-circle me-2"></i>Create Sale
+                                    </button>
+                                    <a href="{{ route('sales.index') }}" class="btn btn-outline-secondary">
+                                        <i class="bi bi-x-circle me-2"></i>Cancel
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <div>
-                <label for="discount_percent" class="block text-sm font-medium text-gray-700 mb-1">Discount (%)</label>
-                <input type="number" name="discount_percent" id="discount_percent" min="0" max="100" step="0.01" value="{{ old('discount_percent', 0) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                @error('discount_percent')
-                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div>
-                <label for="total_price" class="block text-sm font-medium text-gray-700 mb-1">Total Price</label>
-                <input type="number" name="total_price" id="total_price" step="0.01" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100" readonly>
-                @error('total_price')
-                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div>
-                <label for="advance_received" class="block text-sm font-medium text-gray-700 mb-1">Advance Received</label>
-                <input type="number" name="advance_received" id="advance_received" min="0" step="0.01" value="{{ old('advance_received', 0) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                @error('advance_received')
-                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-        </div>
-
-        <!-- Start Date -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                <input type="date" name="start_date" id="start_date" value="{{ old('start_date', date('Y-m-d')) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                @error('start_date')
-                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-        </div>
-
-        <!-- Submit Button -->
-        <div class="flex justify-end space-x-4">
-            <a href="{{ route('sales.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
-                Cancel
-            </a>
-            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg">
-                Create Sale
-            </button>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
 
 <!-- Item Template (Hidden) -->
 <template id="itemTemplate">
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 border border-gray-200 rounded-lg item-row">
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Product</label>
-            <select name="items[INDEX][product_id]" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 product-select" required>
-                <option value="">Select Product</option>
-                @foreach($products as $product)
-                    <option value="{{ $product->id }}" data-price="{{ $product->price }}">
-                        {{ $product->name }} - Rs. {{ number_format($product->price, 2) }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
+    <div class="card item-card mb-3">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <div class="form-floating">
+                        <select name="items[INDEX][product_id]" class="form-select product-select" required>
+                            <option value="">Select Product</option>
+                            @foreach($products as $product)
+                                <option value="{{ $product->id }}" data-price="{{ $product->price }}" 
+                                    data-stock="{{ $product->stock_quantity ?? 0 }}">
+                                    {{ $product->name }} - Rs. {{ number_format($product->price, 2) }}
+                                    @if(isset($product->stock_quantity))
+                                        (Stock: {{ $product->stock_quantity }})
+                                    @endif
+                                </option>
+                            @endforeach
+                        </select>
+                        <label>Product <span class="text-danger">*</span></label>
+                    </div>
+                    <div class="product-info small text-muted mt-1"></div>
+                </div>
 
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-            <input type="number" name="items[INDEX][quantity]" min="1" value="1" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 quantity-input" required>
-        </div>
+                <div class="col-md-2">
+                    <div class="form-floating">
+                        <input type="number" name="items[INDEX][quantity]" min="1" value="1" 
+                            class="form-control quantity-input" required>
+                        <label>Quantity <span class="text-danger">*</span></label>
+                    </div>
+                </div>
 
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Unit Price</label>
-            <input type="number" name="items[INDEX][unit_price]" step="0.01" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 price-input" required>
-        </div>
+                <div class="col-md-2">
+                    <div class="form-floating">
+                        <input type="number" name="items[INDEX][unit_price]" step="0.01" min="0" 
+                            class="form-control price-input" required>
+                        <label>Unit Price <span class="text-danger">*</span></label>
+                    </div>
+                </div>
 
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Total</label>
-            <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 item-total" readonly>
-        </div>
+                <div class="col-md-2">
+                    <div class="form-floating">
+                        <input type="text" class="form-control item-total bg-light" readonly>
+                        <label>Total</label>
+                    </div>
+                </div>
 
-        <div class="flex items-end">
-            <button type="button" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg remove-item">
-                Remove
-            </button>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger btn-sm remove-item w-100">
+                        <i class="bi bi-trash me-1"></i>Remove
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </template>
 
+@endsection
+
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let itemIndex = 0;
@@ -186,13 +360,46 @@ document.addEventListener('DOMContentLoaded', function() {
 
     addItemButton.addEventListener('click', addItem);
 
+    // Branch info display
+    document.getElementById('branch_id').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const branchInfo = document.getElementById('branchInfo');
+        
+        if (selectedOption.value) {
+            branchInfo.innerHTML = `
+                <i class="bi bi-geo-alt me-1"></i>${selectedOption.dataset.location || 'N/A'} | 
+                <i class="bi bi-person me-1"></i>Manager: ${selectedOption.dataset.manager || 'N/A'}
+            `;
+        } else {
+            branchInfo.innerHTML = '';
+        }
+    });
+
+    // Customer info display
+    document.getElementById('customer_id').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const customerInfo = document.getElementById('customerInfo');
+        
+        if (selectedOption.value) {
+            customerInfo.innerHTML = `
+                <i class="bi bi-telephone me-1"></i>${selectedOption.dataset.phone || 'N/A'} | 
+                <i class="bi bi-credit-card me-1"></i>${selectedOption.dataset.cnic || 'N/A'}
+                ${selectedOption.dataset.branch ? ` | <i class="bi bi-building me-1"></i>${selectedOption.dataset.branch}` : ''}
+            `;
+        } else {
+            customerInfo.innerHTML = '';
+        }
+    });
+
     function addItem() {
         const template = itemTemplate.content.cloneNode(true);
         
         // Replace INDEX with actual index
-        template.innerHTML = template.innerHTML.replace(/INDEX/g, itemIndex);
+        const tempDiv = document.createElement('div');
+        tempDiv.appendChild(template);
+        tempDiv.innerHTML = tempDiv.innerHTML.replace(/INDEX/g, itemIndex);
         
-        itemsContainer.appendChild(template);
+        itemsContainer.appendChild(tempDiv.firstElementChild);
         
         // Add event listeners to the new item
         const newItem = itemsContainer.lastElementChild;
@@ -207,12 +414,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const priceInput = itemElement.querySelector('.price-input');
         const itemTotal = itemElement.querySelector('.item-total');
         const removeButton = itemElement.querySelector('.remove-item');
+        const productInfo = itemElement.querySelector('.product-info');
 
         productSelect.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
             if (selectedOption.dataset.price) {
                 priceInput.value = selectedOption.dataset.price;
+                const stock = selectedOption.dataset.stock;
+                productInfo.innerHTML = stock ? `<i class="bi bi-box me-1"></i>Available Stock: ${stock}` : '';
                 calculateItemTotal();
+            } else {
+                priceInput.value = '';
+                productInfo.innerHTML = '';
             }
         });
 
@@ -223,6 +436,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (itemsContainer.children.length > 1) {
                 itemElement.remove();
                 calculateGrandTotal();
+            } else {
+                showToast('At least one item is required', 'error');
             }
         });
 
@@ -243,17 +458,77 @@ document.addEventListener('DOMContentLoaded', function() {
             subtotal += parseFloat(item.value) || 0;
         });
 
-        document.getElementById('subtotal').value = subtotal.toFixed(2);
-        
         const discountPercent = parseFloat(document.getElementById('discount_percent').value) || 0;
         const discountAmount = (subtotal * discountPercent) / 100;
         const totalPrice = subtotal - discountAmount;
-        
+        const advanceReceived = parseFloat(document.getElementById('advance_received').value) || 0;
+        const remainingBalance = Math.max(0, totalPrice - advanceReceived);
+        const durationMonths = parseInt(document.getElementById('duration_months').value) || 1;
+        const monthlyInstallment = remainingBalance / durationMonths;
+
+        // Update display
+        document.getElementById('subtotal').value = subtotal.toFixed(2);
+        document.getElementById('discountAmount').value = discountAmount.toFixed(2);
         document.getElementById('total_price').value = totalPrice.toFixed(2);
+        document.getElementById('remainingBalance').value = remainingBalance.toFixed(2);
+        document.getElementById('monthlyInstallment').value = monthlyInstallment.toFixed(2);
+
+        // Update payment status
+        const statusElement = document.getElementById('paymentStatus');
+        if (remainingBalance <= 0) {
+            statusElement.innerHTML = '<span class="badge bg-success">Paid Full</span>';
+        } else if (advanceReceived > 0) {
+            statusElement.innerHTML = '<span class="badge bg-warning">Partial Payment</span>';
+        } else {
+            statusElement.innerHTML = '<span class="badge bg-danger">No Payment</span>';
+        }
     }
 
-    // Recalculate when discount changes
+    // Recalculate when discount or advance changes
     document.getElementById('discount_percent').addEventListener('input', calculateGrandTotal);
+    document.getElementById('advance_received').addEventListener('input', calculateGrandTotal);
+    document.getElementById('duration_months').addEventListener('change', calculateGrandTotal);
+
+    // Form submission
+    document.getElementById('saleForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const submitBtn = document.getElementById('submitBtn');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating Sale...';
+        
+        const formData = new FormData(this);
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Sale created successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = '{{ route("sales.index") }}';
+                }, 1500);
+            } else {
+                showToast(data.message || 'Failed to create sale', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred while creating the sale', 'error');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        });
+    });
 });
 </script>
-@endsection
+@endpush

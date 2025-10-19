@@ -19,24 +19,56 @@ class SaleController extends Controller
     public function __construct()
     {
         $this->middleware('can:create-sales')->only(['create', 'store']);
-        $this->middleware('can:view-sales')->only(['index', 'show']);
+        $this->middleware('can:view-sales')->only(['index', 'show', 'installments', 'print']);
         $this->middleware('can:pay-installments')->only(['payInstallment']);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $sales = Sale::with(['customer', 'branch', 'saleItems.product'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
+        $query = Sale::with(['customer', 'branch', 'saleItems.product'])
+            ->orderBy('created_at', 'desc');
 
-        return view('sales.index', compact('sales'));
+        // Apply filters
+        if ($request->filled('branch_id')) {
+            $query->where('branch_id', $request->branch_id);
+        }
+
+        if ($request->filled('duration_months')) {
+            $query->where('duration_months', $request->duration_months);
+        }
+
+        if ($request->filled('sale_date')) {
+            $query->whereDate('sale_date', $request->sale_date);
+        }
+
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                // Search by sale ID
+                if (is_numeric($searchTerm)) {
+                    $q->where('id', $searchTerm);
+                }
+                
+                // Search by customer name or phone
+                $q->orWhereHas('customer', function ($customerQuery) use ($searchTerm) {
+                    $customerQuery->where('name', 'like', '%' . $searchTerm . '%')
+                                  ->orWhere('phone', 'like', '%' . $searchTerm . '%')
+                                  ->orWhere('cnic', 'like', '%' . $searchTerm . '%');
+                });
+            });
+        }
+
+        $sales = $query->paginate(15)->appends($request->query());
+        $branches = \App\Models\Branch::where('is_active', true)->orderBy('name')->get();
+
+        return view('sales.index', compact('sales', 'branches'));
     }
 
     public function create()
     {
         $branches = \App\Models\Branch::where('is_active', true)->get();
-        $customers = \App\Models\Customer::orderBy('name')->get();
-        $products = \App\Models\Product::orderBy('name')->get();
+        $customers = \App\Models\Customer::orderBy('name')->where('is_active', true)->get();
+        $products = \App\Models\Product::orderBy('name')->where('active', true)->get();
         
         return view('sales.create', compact('branches', 'customers', 'products'));
     }
@@ -201,6 +233,56 @@ class SaleController extends Controller
                 'message' => 'Failed to process payment: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function installments(Request $request)
+    {
+        $query = Installment::with(['sale.customer', 'sale.branch', 'payments'])
+            ->orderBy('due_date', 'asc');
+
+        // Apply filters
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->branch_id) {
+            $query->whereHas('sale', function ($q) use ($request) {
+                $q->where('branch_id', $request->branch_id);
+            });
+        }
+
+        if ($request->customer_id) {
+            $query->whereHas('sale', function ($q) use ($request) {
+                $q->where('customer_id', $request->customer_id);
+            });
+        }
+
+        if ($request->date_from) {
+            $query->where('due_date', '>=', $request->date_from);
+        }
+
+        if ($request->date_to) {
+            $query->where('due_date', '<=', $request->date_to);
+        }
+
+        if ($request->search) {
+            $query->whereHas('sale.customer', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('phone', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        $installments = $query->paginate(20);
+        $branches = \App\Models\Branch::where('is_active', true)->get();
+
+        return view('sales.installments', compact('installments', 'branches'));
+    }
+
+    public function print(Sale $sale)
+    {
+        $sale->load(['customer', 'branch', 'saleItems.product', 'installments.payments']);
+        
+        return view('sales.print', compact('sale'));
     }
 
     private function calculateInstallmentStatus($amount, $paidAmount): string

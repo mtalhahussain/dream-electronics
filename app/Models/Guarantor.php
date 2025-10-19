@@ -10,14 +10,7 @@ class Guarantor extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'customer_id',
-        'name',
-        'cnic',
-        'phone',
-        'address',
-        'relationship'
-    ];
+    protected $guarded = ['id'];
 
     public function customer(): BelongsTo
     {

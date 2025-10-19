@@ -18,15 +18,9 @@
         <form id="filterForm">
             <div class="row g-3">
                 <div class="col-md-2">
-                    <select class="form-select form-select-sm" name="category" id="categoryFilter">
+                    <select class="form-select form-select-sm" name="category_id" id="categoryFilter">
                         <option value="">All Categories</option>
-                        <option value="Mobile">Mobile</option>
-                        <option value="Laptop">Laptop</option>
-                        <option value="TV">TV</option>
-                        <option value="Refrigerator">Refrigerator</option>
-                        <option value="Washing Machine">Washing Machine</option>
-                        <option value="Air Conditioner">Air Conditioner</option>
-                        <option value="Other">Other</option>
+                        <!-- Categories will be loaded dynamically -->
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -78,17 +72,7 @@
         </div>
     </div>
 
-<!-- Toast Container -->
-<div class="toast-container position-fixed top-0 end-0 p-3">
-    <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header">
-            <i class="bi bi-check-circle-fill text-success me-2" id="toastIcon"></i>
-            <strong class="me-auto" id="toastTitle">Success</strong>
-            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-        </div>
-        <div class="toast-body" id="toastMessage"></div>
-    </div>
-</div>
+<!-- Toast is now handled by the global admin layout -->
 
 <!-- Product Modal -->
 <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
@@ -141,17 +125,11 @@
                         
                         <div class="col-md-6">
                             <div class="form-floating">
-                                <select class="form-select" id="category" name="category" required>
+                                <select class="form-select" id="category_id" name="category_id" required>
                                     <option value="">Choose category</option>
-                                    <option value="Mobile">Mobile</option>
-                                    <option value="Laptop">Laptop</option>
-                                    <option value="TV">TV</option>
-                                    <option value="Refrigerator">Refrigerator</option>
-                                    <option value="Washing Machine">Washing Machine</option>
-                                    <option value="Air Conditioner">Air Conditioner</option>
-                                    <option value="Other">Other</option>
+                                    <!-- Categories will be loaded dynamically -->
                                 </select>
-                                <label for="category">Category <span class="text-danger">*</span></label>
+                                <label for="category_id">Category <span class="text-danger">*</span></label>
                                 <div class="invalid-feedback"></div>
                             </div>
                         </div>
@@ -209,28 +187,7 @@
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete this product? This action cannot be undone.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="deleteForm" method="POST" class="d-inline">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+
 @endsection
 
 @push('scripts')
@@ -249,6 +206,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize edit handlers
     initializeEditHandlers();
+    
+    // Load categories
+    loadCategories();
     
     function initializeFilters() {
         const filterForm = document.getElementById('filterForm');
@@ -336,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
+                if (data.ok) {
                     showToast(data.message, 'success');
                     bootstrap.Modal.getInstance(modal).hide();
                     loadProducts(); // Reload table without page refresh
@@ -376,6 +336,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const btn = e.target.closest('.edit-product');
                 editProduct(btn);
             }
+            
+            if (e.target.closest('.delete-product')) {
+                const btn = e.target.closest('.delete-product');
+                deleteProduct(btn);
+            }
         });
     }
     
@@ -394,7 +359,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                updateProductsTable(data.data, data.pagination);
+                updateProductsTable(data.data, data.pagination, data.permissions);
             } else {
                 showToast('Failed to load products', 'error');
             }
@@ -408,7 +373,49 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    function updateProductsTable(products, pagination) {
+    function loadCategories() {
+        fetch('/categories/active', {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                populateCategoryDropdowns(data.categories);
+            } else {
+                console.error('Failed to load categories');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading categories:', error);
+        });
+    }
+    
+    function populateCategoryDropdowns(categories) {
+        const modalSelect = document.getElementById('category_id');
+        const filterSelect = document.getElementById('categoryFilter');
+        
+        // Clear existing options (except the first "Choose/All" option)
+        modalSelect.innerHTML = '<option value="">Choose category</option>';
+        filterSelect.innerHTML = '<option value="">All Categories</option>';
+        
+        // Add category options
+        categories.forEach(category => {
+            const modalOption = document.createElement('option');
+            modalOption.value = category.id;
+            modalOption.textContent = category.name;
+            modalSelect.appendChild(modalOption);
+            
+            const filterOption = document.createElement('option');
+            filterOption.value = category.id;
+            filterOption.textContent = category.name;
+            filterSelect.appendChild(filterOption);
+        });
+    }
+    
+    function updateProductsTable(products, pagination, permissions = {}) {
         const container = document.getElementById('productsTable');
         
         if (products.length === 0) {
@@ -464,7 +471,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     </td>
                     <td>${product.model}</td>
                     <td>${product.brand}</td>
-                    <td><span class="badge bg-info">${product.category}</span></td>
+                    <td>
+                        ${(() => {
+                            const categoryDisplay = product.category_display;
+                            if (categoryDisplay.badge_class === 'custom') {
+                                return `<span class="badge" style="background-color: ${categoryDisplay.color}; color: white;">
+                                    ${categoryDisplay.icon ? `<i class="bi ${categoryDisplay.icon} me-1"></i>` : ''}
+                                    ${categoryDisplay.name}
+                                </span>`;
+                            } else {
+                                return `<span class="badge ${categoryDisplay.badge_class}">${categoryDisplay.name}</span>`;
+                            }
+                        })()}
+                    </td>
                     <td><strong>Rs. ${parseFloat(product.price).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
                     <td><span class="badge bg-${stockBadge}">${product.stock_quantity} units</span></td>
                     <td>
@@ -486,21 +505,27 @@ document.addEventListener('DOMContentLoaded', function() {
                         <button type="button" class="btn btn-outline-primary btn-sm me-1 edit-product" 
                                 data-product-id="${product.id}"
                                 data-branch-id="${product.branch_id || ''}"
+                                data-category-id="${product.category_id || ''}"
                                 data-name="${product.name}"
                                 data-model="${product.model}"
                                 data-brand="${product.brand}"
-                                data-category="${product.category}"
                                 data-price="${product.price}"
                                 data-stock="${product.stock_quantity}"
                                 data-description="${product.description || ''}"
                                 data-active="${product.active ? '1' : '0'}">>
                             <i class="bi bi-pencil"></i>
                         </button>
-                        ${product.purchase_invoice_path ? `
-                        <a href="/storage/${product.purchase_invoice_path}" target="_blank" 
-                           class="btn btn-outline-info btn-sm" title="View Invoice">
+                        ${product.purchase_invoice ? `
+                        <a href="/storage/${product.purchase_invoice}" target="_blank" 
+                           class="btn btn-outline-info btn-sm me-1" title="View Invoice">
                             <i class="bi bi-file-text"></i>
                         </a>` : ''}
+                        ${permissions.can_delete ? `
+                        <button type="button" class="btn btn-outline-danger btn-sm delete-product" 
+                                data-product-id="${product.id}"
+                                data-product-name="${product.name}">
+                            <i class="bi bi-trash"></i>
+                        </button>` : ''}
                     </td>
                 </tr>
             `;
@@ -526,6 +551,17 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Re-initialize event listeners for the new content
         initializeEventDelegation();
+        
+        // Handle pagination clicks
+        document.querySelectorAll('.page-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = this.getAttribute('data-page');
+                if (page) {
+                    loadProductsPage(page);
+                }
+            });
+        });
     }
     
     function generatePaginationLinks(pagination) {
@@ -566,10 +602,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Fill form with product data
         document.getElementById('branch_id').value = btn.getAttribute('data-branch-id');
+        document.getElementById('category_id').value = btn.getAttribute('data-category-id');
         document.getElementById('name').value = btn.getAttribute('data-name');
         document.getElementById('model').value = btn.getAttribute('data-model');
         document.getElementById('brand').value = btn.getAttribute('data-brand');
-        document.getElementById('category').value = btn.getAttribute('data-category');
         document.getElementById('price').value = btn.getAttribute('data-price');
         document.getElementById('stock_quantity').value = btn.getAttribute('data-stock');
         document.getElementById('description').value = btn.getAttribute('data-description');
@@ -580,6 +616,38 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Show modal
         new bootstrap.Modal(document.getElementById('productModal')).show();
+    }
+    
+    function deleteProduct(btn) {
+        const productId = btn.getAttribute('data-product-id');
+        const productName = btn.getAttribute('data-product-name');
+        
+        if (confirm(`Are you sure you want to delete the product "${productName}"? This action cannot be undone.`)) {
+            // Get CSRF token
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            
+            fetch(`/products/${productId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': token
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    loadProducts(); // Reload the products table
+                } else {
+                    showToast(data.message || 'Failed to delete product', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('An unexpected error occurred while deleting the product', 'error');
+            });
+        }
     }
     
     function toggleProductStatus(productId, checkbox) {
@@ -599,10 +667,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     badge.classList.remove('bg-secondary');
                     badge.classList.add('bg-success');
                     badge.textContent = 'Active';
+                    checkbox.checked = true;
                 } else {
                     badge.classList.remove('bg-success');
                     badge.classList.add('bg-secondary');
                     badge.textContent = 'Inactive';
+                    checkbox.checked = false;
                 }
                 showToast(data.message, 'success');
             } else {
@@ -629,28 +699,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('productsTable').style.opacity = '1';
     }
     
-    function showToast(message, type = 'success') {
-        const toast = document.getElementById('toast');
-        const toastIcon = document.getElementById('toastIcon');
-        const toastTitle = document.getElementById('toastTitle');
-        const toastMessage = document.getElementById('toastMessage');
-        
-        // Update icon and title based on type
-        if (type === 'success') {
-            toastIcon.className = 'bi bi-check-circle-fill text-success me-2';
-            toastTitle.textContent = 'Success';
-            toast.className = 'toast';
-        } else {
-            toastIcon.className = 'bi bi-exclamation-triangle-fill text-danger me-2';
-            toastTitle.textContent = 'Error';
-            toast.className = 'toast';
-        }
-        
-        toastMessage.textContent = message;
-        
-        const bsToast = new bootstrap.Toast(toast);
-        bsToast.show();
-    }
+    // Toast function is now handled by the global admin layout
     
     function clearValidationErrors() {
         document.querySelectorAll('.is-invalid').forEach(el => {
@@ -694,7 +743,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                updateProductsTable(data.data, data.pagination);
+                updateProductsTable(data.data, data.pagination, data.permissions);
             } else {
                 showToast('Failed to load products', 'error');
             }

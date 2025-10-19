@@ -33,7 +33,17 @@
                     <td>{{ $product->model }}</td>
                     <td>{{ $product->brand }}</td>
                     <td>
-                        <span class="badge bg-info">{{ $product->category }}</span>
+                        @php $categoryDisplay = $product->category_display; @endphp
+                        @if($categoryDisplay['badge_class'] === 'custom')
+                            <span class="badge" style="background-color: {{ $categoryDisplay['color'] }}; color: white;">
+                                @if($categoryDisplay['icon'])
+                                    <i class="bi {{ $categoryDisplay['icon'] }} me-1"></i>
+                                @endif
+                                {{ $categoryDisplay['name'] }}
+                            </span>
+                        @else
+                            <span class="badge {{ $categoryDisplay['badge_class'] }}">{{ $categoryDisplay['name'] }}</span>
+                        @endif
                     </td>
                     <td>
                         <strong>Rs. {{ number_format($product->price, 2) }}</strong>
@@ -63,23 +73,30 @@
                     <td>
                         <button type="button" class="btn btn-outline-primary btn-sm me-1 edit-product" 
                                 data-product-id="{{ $product->id }}"
-                                data-branch-id="{{ $product->branch_id }}"
+                                data-branch-id="{{ $product->branch_id ?? '' }}"
+                                data-category-id="{{ $product->category_id ?? '' }}"
                                 data-name="{{ $product->name }}"
                                 data-model="{{ $product->model }}"
                                 data-brand="{{ $product->brand }}"
-                                data-category="{{ $product->category }}"
                                 data-price="{{ $product->price }}"
                                 data-stock="{{ $product->stock_quantity }}"
-                                data-description="{{ $product->description }}"
-                                data-active="{{ $product->active ? '1' : '0' }}">>
+                                data-description="{{ $product->description ?? '' }}"
+                                data-active="{{ $product->active ? '1' : '0' }}">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        @if($product->purchase_invoice_path)
-                        <a href="{{ Storage::url($product->purchase_invoice_path) }}" target="_blank" 
-                           class="btn btn-outline-info btn-sm" title="View Invoice">
+                        @if($product->purchase_invoice)
+                        <a href="{{ Storage::url($product->purchase_invoice) }}" target="_blank" 
+                           class="btn btn-outline-info btn-sm me-1" title="View Invoice">
                             <i class="bi bi-file-text"></i>
                         </a>
                         @endif
+                        @can('delete-products')
+                        <button type="button" class="btn btn-outline-danger btn-sm delete-product" 
+                                data-product-id="{{ $product->id }}"
+                                data-product-name="{{ $product->name }}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        @endcan
                     </td>
                 </tr>
                 @endforeach

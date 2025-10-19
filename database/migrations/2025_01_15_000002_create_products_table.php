@@ -13,11 +13,10 @@ return new class extends Migration
             $table->string('name');
             $table->string('model');
             $table->string('brand');
-            $table->string('category');
             $table->decimal('price', 12, 2);
             $table->integer('stock_quantity')->default(0);
             $table->text('description')->nullable();
-            $table->string('purchase_invoice_path')->nullable();
+            $table->string('purchase_invoice')->nullable();
             $table->timestamps();
         });
     }

@@ -15,41 +15,89 @@
     
     <!-- Filter Toolbar -->
     <div class="card-body border-bottom bg-light">
-        <div class="row g-3">
-            <div class="col-md-3">
-                <select class="form-select form-select-sm" id="branchFilter">
-                    <option value="">All Branches</option>
-                    <!-- Will be populated via server-side data -->
-                </select>
-            </div>
-            <div class="col-md-2">
-                <select class="form-select form-select-sm" id="statusFilter">
-                    <option value="">All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="completed">Completed</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <select class="form-select form-select-sm" id="durationFilter">
-                    <option value="">All Duration</option>
-                    <option value="6">6 Months</option>
-                    <option value="10">10 Months</option>
-                    <option value="12">12 Months</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <input type="date" class="form-control form-control-sm" id="dateFilter" placeholder="Sale Date">
-            </div>
-            <div class="col-md-3">
-                <div class="input-group input-group-sm">
-                    <input type="text" class="form-control" placeholder="Search sales..." id="searchFilter">
-                    <button class="btn btn-outline-secondary" type="button">
-                        <i class="bi bi-search"></i>
-                    </button>
+        <form method="GET" action="{{ route('sales.index') }}" id="filterForm">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <select class="form-select form-select-sm" name="branch_id" id="branchFilter">
+                        <option value="">All Branches</option>
+                        @foreach($branches as $branch)
+                            <option value="{{ $branch->id }}" {{ request('branch_id') == $branch->id ? 'selected' : '' }}>
+                                {{ $branch->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select form-select-sm" name="duration_months" id="durationFilter">
+                        <option value="">All Duration</option>
+                        <option value="6" {{ request('duration_months') == '6' ? 'selected' : '' }}>6 Months</option>
+                        <option value="10" {{ request('duration_months') == '10' ? 'selected' : '' }}>10 Months</option>
+                        <option value="12" {{ request('duration_months') == '12' ? 'selected' : '' }}>12 Months</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="date" class="form-control form-control-sm" name="sale_date" id="dateFilter" 
+                        value="{{ request('sale_date') }}" placeholder="Sale Date">
+                </div>
+                <div class="col-md-4">
+                    <div class="input-group input-group-sm">
+                        <input type="text" class="form-control" name="search" placeholder="Search by customer name, phone, or sale ID..." 
+                            id="searchFilter" value="{{ request('search') }}">
+                        <button class="btn btn-outline-secondary" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <a href="{{ route('sales.index') }}" class="btn btn-outline-secondary btn-sm w-100" title="Clear Filters">
+                        <i class="bi bi-x-circle"></i>
+                    </a>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
+    
+    <!-- Active Filters Display -->
+    @if(request()->hasAny(['branch_id', 'duration_months', 'sale_date', 'search']))
+        <div class="card-body border-bottom py-2">
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <small class="text-muted me-2">Active filters:</small>
+                
+                @if(request('branch_id'))
+                    @php $selectedBranch = $branches->find(request('branch_id')) @endphp
+                    <span class="badge bg-primary">
+                        Branch: {{ $selectedBranch ? $selectedBranch->name : 'Unknown' }}
+                        <a href="{{ request()->fullUrlWithQuery(['branch_id' => null]) }}" class="text-white ms-1">×</a>
+                    </span>
+                @endif
+                
+                @if(request('duration_months'))
+                    <span class="badge bg-info">
+                        Duration: {{ request('duration_months') }} months
+                        <a href="{{ request()->fullUrlWithQuery(['duration_months' => null]) }}" class="text-white ms-1">×</a>
+                    </span>
+                @endif
+                
+                @if(request('sale_date'))
+                    <span class="badge bg-warning">
+                        Date: {{ \Carbon\Carbon::parse(request('sale_date'))->format('M d, Y') }}
+                        <a href="{{ request()->fullUrlWithQuery(['sale_date' => null]) }}" class="text-white ms-1">×</a>
+                    </span>
+                @endif
+                
+                @if(request('search'))
+                    <span class="badge bg-success">
+                        Search: "{{ request('search') }}"
+                        <a href="{{ request()->fullUrlWithQuery(['search' => null]) }}" class="text-white ms-1">×</a>
+                    </span>
+                @endif
+                
+                <a href="{{ route('sales.index') }}" class="btn btn-outline-secondary btn-sm ms-2">
+                    <i class="bi bi-x-circle me-1"></i>Clear All
+                </a>
+            </div>
+        </div>
+    @endif
     
     <div class="card-body p-0">
         @if(($sales ?? collect())->count() > 0)
@@ -152,10 +200,24 @@
         @else
             <div class="text-center py-5">
                 <i class="bi bi-cart3 display-4 text-muted"></i>
-                <p class="text-muted mt-3">No sales found</p>
-                <a href="{{ route('sales.create') }}" class="btn btn-primary">
-                    <i class="bi bi-plus-circle me-2"></i>Create First Sale
-                </a>
+                @if(request()->hasAny(['branch_id', 'duration_months', 'sale_date', 'search']))
+                    <h5 class="text-muted mt-3">No sales found matching your filters</h5>
+                    <p class="text-muted">Try adjusting your search criteria or clearing filters</p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="{{ route('sales.index') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>Clear Filters
+                        </a>
+                        <a href="{{ route('sales.create') }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>Create New Sale
+                        </a>
+                    </div>
+                @else
+                    <h5 class="text-muted mt-3">No sales found</h5>
+                    <p class="text-muted">Get started by creating your first sale</p>
+                    <a href="{{ route('sales.create') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>Create First Sale
+                    </a>
+                @endif
             </div>
         @endif
     </div>
@@ -165,8 +227,20 @@
         <div class="d-flex justify-content-between align-items-center">
             <div class="text-muted small">
                 Showing {{ $sales->firstItem() }} to {{ $sales->lastItem() }} of {{ $sales->total() }} results
+                @if(request()->hasAny(['branch_id', 'duration_months', 'sale_date', 'search']))
+                    <span class="text-primary">(filtered)</span>
+                @endif
             </div>
             {{ $sales->links() }}
+        </div>
+    </div>
+    @elseif($sales->total() > 0)
+    <div class="card-footer bg-white">
+        <div class="text-muted small">
+            {{ $sales->total() }} result{{ $sales->total() > 1 ? 's' : '' }} found
+            @if(request()->hasAny(['branch_id', 'duration_months', 'sale_date', 'search']))
+                <span class="text-primary">(filtered)</span>
+            @endif
         </div>
     </div>
     @endif
@@ -259,6 +333,8 @@
 
 @push('scripts')
 <script>
+    const salesPrintBaseUrl = '{{ url("sales") }}';
+    
     function recordPayment(saleId) {
         document.getElementById('saleId').value = saleId;
         document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
@@ -268,8 +344,13 @@
     }
     
     function printInvoice(saleId) {
+        if (!saleId) {
+            console.error('Sale ID is required for printing');
+            return;
+        }
         // Open print view in new window
-        window.open(`/sales/${saleId}/print`, '_blank');
+        const printUrl = `${salesPrintBaseUrl}/${saleId}/print`;
+        window.open(printUrl, '_blank');
     }
     
     function deleteSale(saleId) {
@@ -314,25 +395,24 @@
         });
     });
     
-    // Filter functionality
-    document.getElementById('searchFilter').addEventListener('input', function() {
-        // Implementation for search filter
-    });
-    
+    // Auto-submit form when filters change
     document.getElementById('branchFilter').addEventListener('change', function() {
-        // Implementation for branch filter
-    });
-    
-    document.getElementById('statusFilter').addEventListener('change', function() {
-        // Implementation for status filter
+        document.getElementById('filterForm').submit();
     });
     
     document.getElementById('durationFilter').addEventListener('change', function() {
-        // Implementation for duration filter
+        document.getElementById('filterForm').submit();
     });
     
     document.getElementById('dateFilter').addEventListener('change', function() {
-        // Implementation for date filter
+        document.getElementById('filterForm').submit();
+    });
+    
+    // Submit search on Enter key press
+    document.getElementById('searchFilter').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            document.getElementById('filterForm').submit();
+        }
     });
 </script>
 @endpush

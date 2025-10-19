@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::create('guarantors', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
+            $table->foreignId('customer_id')->constrained('customers')->cascadeOnDelete();
             $table->string('name');
-            $table->string('cnic', 13);
             $table->string('phone', 20);
+            $table->string('cnic', 15);
             $table->text('address');
             $table->string('relationship');
             $table->timestamps();

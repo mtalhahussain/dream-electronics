@@ -24,6 +24,9 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password'),
         ]);
 
-        $this->call(RolesAndPermissionsSeeder::class);
+        $this->call([RolesAndPermissionsSeeder::class,
+                    BranchSeeder::class,
+                    CategorySeeder::class,
+                ]);
     }
 }

@@ -13,15 +13,19 @@ class Product extends Model
 
     protected $fillable = [
         'branch_id',
+        'category_id',
         'name',
         'model',
         'brand',
-        'category',
         'price',
         'stock_quantity',
         'description',
         'purchase_invoice',
         'active'
+    ];
+
+    protected $appends = [
+        'category_display'
     ];
 
     protected $casts = [
@@ -35,6 +39,11 @@ class Product extends Model
         return $this->belongsTo(Branch::class);
     }
 
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class)->select('id', 'name', 'color', 'icon', 'slug');
+    }
+
     public function saleItems(): HasMany
     {
         return $this->hasMany(SaleItem::class);
@@ -43,5 +52,27 @@ class Product extends Model
     public function stockCredits(): HasMany
     {
         return $this->hasMany(StockCredit::class);
+    }
+
+    public function getCategoryDisplayAttribute()
+    {
+       
+        if ($this->category_id && $this->relationLoaded('category') && $this->category && is_object($this->category)) {
+            return [
+                'type' => 'relationship',
+                'name' => $this->category->name,
+                'color' => $this->category->color,
+                'icon' => $this->category->icon,
+                'badge_class' => 'custom'
+            ];
+        }
+       
+        return [
+            'type' => 'none',
+            'name' => 'No Category',
+            'color' => '#6c757d',
+            'icon' => null,
+            'badge_class' => 'bg-secondary'
+        ];
     }
 }

@@ -62,11 +62,17 @@
             <a class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}" href="{{ route('products.index') }}">
                 <i class="bi bi-box-seam me-2"></i>Products
             </a>
+            <a class="nav-link {{ request()->routeIs('categories.*') ? 'active' : '' }}" href="{{ route('categories.index') }}">
+                <i class="bi bi-tags me-2"></i>Categories
+            </a>
             <a class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}" href="{{ route('customers.index') }}">
                 <i class="bi bi-people me-2"></i>Customers
             </a>
-            <a class="nav-link {{ request()->routeIs('sales.*') ? 'active' : '' }}" href="{{ route('sales.index') }}">
+            <a class="nav-link {{ request()->routeIs('sales.index') || request()->routeIs('sales.show') || request()->routeIs('sales.create') ? 'active' : '' }}" href="{{ route('sales.index') }}">
                 <i class="bi bi-cart3 me-2"></i>Sales
+            </a>
+            <a class="nav-link {{ request()->routeIs('sales.installments') ? 'active' : '' }}" href="{{ route('sales.installments') }}">
+                <i class="bi bi-calendar-check me-2"></i>Installments
             </a>
             <a class="nav-link {{ request()->routeIs('finance.*') ? 'active' : '' }}" href="{{ route('finance.index') }}">
                 <i class="bi bi-graph-up me-2"></i>Finance
