@@ -74,12 +74,29 @@
             <a class="nav-link {{ request()->routeIs('sales.installments') ? 'active' : '' }}" href="{{ route('sales.installments') }}">
                 <i class="bi bi-calendar-check me-2"></i>Installments
             </a>
-            <a class="nav-link {{ request()->routeIs('finance.*') ? 'active' : '' }}" href="{{ route('finance.index') }}">
+            <a class="nav-link {{ request()->routeIs('finance.*') || request()->routeIs('expenses.*') || request()->routeIs('stock-credits.*') || request()->routeIs('salary-payments.*') ? 'active' : '' }}" href="{{ route('finance.index') }}">
                 <i class="bi bi-graph-up me-2"></i>Finance
             </a>
+            
+            <!-- Finance Sub-menu -->
+            @if(request()->routeIs('finance.*') || request()->routeIs('expenses.*') || request()->routeIs('stock-credits.*') || request()->routeIs('salary-payments.*'))
+            <div class="ms-3 mb-2">
+                <a class="nav-link {{ request()->routeIs('expenses.*') ? 'active' : '' }} small" href="{{ route('expenses.index') }}">
+                    <i class="bi bi-receipt me-2"></i>Manage Expenses
+                </a>
+                <a class="nav-link {{ request()->routeIs('stock-credits.*') ? 'active' : '' }} small" href="{{ route('stock-credits.index') }}">
+                    <i class="bi bi-box me-2"></i>Manage Stock Credits
+                </a>
+                <a class="nav-link {{ request()->routeIs('salary-payments.*') ? 'active' : '' }} small" href="{{ route('salary-payments.index') }}">
+                    <i class="bi bi-people me-2"></i>Manage Salaries
+                </a>
+            </div>
+            @endif
             <a class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}" href="{{ route('employees.index') }}">
                 <i class="bi bi-person-badge me-2"></i>Employees
             </a>
+            
+           
             <a class="nav-link {{ request()->routeIs('branches.*') ? 'active' : '' }}" href="{{ route('branches.index') }}">
                 <i class="bi bi-building me-2"></i>Branches
             </a>

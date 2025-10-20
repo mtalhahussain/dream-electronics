@@ -19,12 +19,34 @@ class StoreCustomerRequest extends FormRequest
             'cnic' => 'required|string|size:15|unique:customers,cnic,' . $this->route('customer')?->id,
             'phone' => 'required|string|max:20',
             'address' => 'required|string|max:500',
+            'profession' => 'nullable|string|max:255',
+            'father_husband_name' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
             'is_active' => 'boolean',
             'biometric' => 'nullable|file|mimes:jpg,jpeg,png|max:1024',
             'face_photo' => 'nullable|file|mimes:jpg,jpeg,png|max:1024',
             
-            // Guarantor fields
+            // Guarantor 1 fields
+            'guarantor_1_name' => 'nullable|string|max:255',
+            'guarantor_1_cnic' => 'nullable|string|size:15',
+            'guarantor_1_phone' => 'nullable|string|max:20',
+            'guarantor_1_address' => 'nullable|string|max:500',
+            'guarantor_1_relationship' => 'nullable|string|max:100',
+            'guarantor_1_profession' => 'nullable|string|max:255',
+            'guarantor_1_father_husband_name' => 'nullable|string|max:255',
+            'guarantor_1_biometric' => 'nullable|file|mimes:jpg,jpeg,png|max:1024',
+            
+            // Guarantor 2 fields
+            'guarantor_2_name' => 'nullable|string|max:255',
+            'guarantor_2_cnic' => 'nullable|string|size:15',
+            'guarantor_2_phone' => 'nullable|string|max:20',
+            'guarantor_2_address' => 'nullable|string|max:500',
+            'guarantor_2_relationship' => 'nullable|string|max:100',
+            'guarantor_2_profession' => 'nullable|string|max:255',
+            'guarantor_2_father_husband_name' => 'nullable|string|max:255',
+            'guarantor_2_biometric' => 'nullable|file|mimes:jpg,jpeg,png|max:1024',
+            
+            // Legacy guarantor fields (for backward compatibility)
             'guarantor_name' => 'nullable|string|max:255',
             'guarantor_cnic' => 'nullable|string|size:15',
             'guarantor_phone' => 'nullable|string|max:20',

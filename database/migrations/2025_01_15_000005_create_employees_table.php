@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('branch_id')->constrained('branches')->onDelete('cascade');
             $table->string('name');
-            $table->string('cnic', 13)->unique();
+            $table->string('cnic', 15)->unique();
             $table->string('phone', 20);
             $table->string('email')->nullable();
             $table->string('position');
@@ -25,6 +25,8 @@ return new class extends Migration
 
     public function down(): void
     {
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('employees');
+        Schema::enableForeignKeyConstraints();
     }
 };

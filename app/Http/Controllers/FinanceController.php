@@ -4,6 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\FinanceTransaction;
 use App\Models\Product;
+use App\Models\Branch;
+use App\Models\Sale;
+use App\Models\SaleItem;
+use App\Models\Expense;
+use App\Models\StockCredit;
+use App\Models\Employee;
+use App\Models\SalaryPayment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -15,13 +22,62 @@ class FinanceController extends Controller
         $this->middleware('can:view-finance')->only(['summary', 'index']);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $transactions = FinanceTransaction::with('branch')
-            ->orderBy('transaction_date', 'desc')
-            ->paginate(20);
+        $request->validate([
+            'from' => 'nullable|date',
+            'to' => 'nullable|date|after_or_equal:from',
+            'branch_id' => 'nullable|exists:branches,id',
+            'make' => 'nullable|string',
+            'section' => 'nullable|in:products,expenses,stock_credit,salary',
+        ]);
 
-        return view('finance.index', compact('transactions'));
+        $branches = Branch::where('is_active', true)->get();
+        
+        // Date filter defaults
+        $from = $request->from ?? Carbon::now()->startOfMonth()->format('Y-m-d');
+        $to = $request->to ?? Carbon::now()->format('Y-m-d');
+        $branchId = $request->branch_id;
+        $make = $request->make;
+        $activeSection = $request->section ?? 'products';
+
+        // Products In/Out Section
+        $productsIn = $this->getProductsIn($from, $to, $branchId, $make);
+        $productsOut = $this->getProductsOut($from, $to, $branchId, $make);
+        
+        // Office Expenses Section
+        $officeExpenses = $this->getOfficeExpenses($from, $to, $branchId);
+        
+        // Stock Credit Section
+        $stockCredits = $this->getStockCredits($from, $to, $make);
+        
+        // Salary Section
+        $salaryExpenses = $this->getSalaryExpenses($from, $to, $branchId);
+
+        // Summary calculations
+        $summary = [
+            'products_in_total' => $productsIn->sum('total_value'),
+            'products_out_total' => $productsOut->sum('total_price'),
+            'expenses_total' => $officeExpenses->sum('amount'),
+            'stock_credit_total' => $stockCredits->sum('total_cost'),
+            'salary_total' => $salaryExpenses->sum('amount'),
+            'net_profit' => $productsOut->sum('total_price') - $productsIn->sum('total_value') - $officeExpenses->sum('amount') - $salaryExpenses->sum('amount'),
+        ];
+
+        return view('finance.index', compact(
+            'branches',
+            'productsIn',
+            'productsOut', 
+            'officeExpenses',
+            'stockCredits',
+            'salaryExpenses',
+            'summary',
+            'from',
+            'to',
+            'branchId',
+            'make',
+            'activeSection'
+        ));
     }
 
     public function summary(Request $request)
@@ -113,5 +169,82 @@ class FinanceController extends Controller
         }
 
         return view('finance.summary', compact('summary'));
+    }
+
+    private function getProductsIn($from, $to, $branchId = null, $make = null)
+    {
+        $query = StockCredit::with('product')
+            ->whereBetween('purchase_date', [$from, $to]);
+
+        if ($make) {
+            $query->whereHas('product', function ($q) use ($make) {
+                $q->where('model', 'LIKE', "%{$make}%")
+                  ->orWhere('brand', 'LIKE', "%{$make}%");
+            });
+        }
+
+        return $query->orderBy('purchase_date', 'desc')->get();
+    }
+
+    private function getProductsOut($from, $to, $branchId = null, $make = null)
+    {
+        $query = SaleItem::with(['product', 'sale.branch', 'sale.customer'])
+            ->whereHas('sale', function ($q) use ($from, $to, $branchId) {
+                $q->whereBetween('sale_date', [$from, $to]);
+                if ($branchId) {
+                    $q->where('branch_id', $branchId);
+                }
+            });
+
+        if ($make) {
+            $query->whereHas('product', function ($q) use ($make) {
+                $q->where('model', 'LIKE', "%{$make}%")
+                  ->orWhere('brand', 'LIKE', "%{$make}%");
+            });
+        }
+
+        return $query->orderBy('created_at', 'desc')->get();
+    }
+
+    private function getOfficeExpenses($from, $to, $branchId = null)
+    {
+        $query = Expense::with('branch')
+            ->whereBetween('expense_date', [$from, $to]);
+
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
+
+        return $query->orderBy('expense_date', 'desc')->get();
+    }
+
+    private function getStockCredits($from, $to, $make = null)
+    {
+        $query = StockCredit::with('product')
+            ->whereBetween('purchase_date', [$from, $to])
+            ->where('total_cost', 0); // Items received without payment
+
+        if ($make) {
+            $query->whereHas('product', function ($q) use ($make) {
+                $q->where('model', 'LIKE', "%{$make}%")
+                  ->orWhere('brand', 'LIKE', "%{$make}%");
+            });
+        }
+
+        return $query->orderBy('purchase_date', 'desc')->get();
+    }
+
+    private function getSalaryExpenses($from, $to, $branchId = null)
+    {
+        $query = SalaryPayment::with(['employee.branch'])
+            ->whereBetween('payment_date', [$from, $to]);
+
+        if ($branchId) {
+            $query->whereHas('employee', function ($q) use ($branchId) {
+                $q->where('branch_id', $branchId);
+            });
+        }
+
+        return $query->orderBy('payment_date', 'desc')->get();
     }
 }

@@ -11,6 +11,9 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\SmsController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\StockCreditController;
+use App\Http\Controllers\SalaryPaymentController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login');
@@ -44,7 +47,30 @@ Route::middleware(['auth'])->group(function () {
     Route::get('finance', [FinanceController::class, 'index'])->name('finance.index');
     Route::get('finance/summary', [FinanceController::class, 'summary'])->name('finance.summary');
     
+    // Expense Management routes
+    Route::get('expenses', [ExpenseController::class, 'index'])->name('expenses.index');
+    Route::post('expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+    Route::get('expenses/{expense}/get', [ExpenseController::class, 'getExpense'])->name('expenses.get');
+    Route::put('expenses/{expense}', [ExpenseController::class, 'update'])->name('expenses.update');
+    Route::delete('expenses/{expense}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
+    
+    // Stock Credit Management routes
+    Route::get('stock-credits', [StockCreditController::class, 'index'])->name('stock-credits.index');
+    Route::post('stock-credits', [StockCreditController::class, 'store'])->name('stock-credits.store');
+    Route::get('stock-credits/{stockCredit}/get', [StockCreditController::class, 'getStockCredit'])->name('stock-credits.get');
+    Route::put('stock-credits/{stockCredit}', [StockCreditController::class, 'update'])->name('stock-credits.update');
+    Route::delete('stock-credits/{stockCredit}', [StockCreditController::class, 'destroy'])->name('stock-credits.destroy');
+    
+    // Salary Payment Management routes
+    Route::get('salary-payments', [SalaryPaymentController::class, 'index'])->name('salary-payments.index');
+    Route::post('salary-payments', [SalaryPaymentController::class, 'store'])->name('salary-payments.store');
+    Route::get('salary-payments/{salaryPayment}/get', [SalaryPaymentController::class, 'getSalaryPayment'])->name('salary-payments.get');
+    Route::put('salary-payments/{salaryPayment}', [SalaryPaymentController::class, 'update'])->name('salary-payments.update');
+    Route::delete('salary-payments/{salaryPayment}', [SalaryPaymentController::class, 'destroy'])->name('salary-payments.destroy');
+    Route::post('salary-payments/generate', [SalaryPaymentController::class, 'generate'])->name('salary-payments.generate');
+    
     // Employee routes
+    Route::get('employees/roles', [EmployeeController::class, 'roles'])->name('employees.roles');
     Route::resource('employees', EmployeeController::class);
     
     // Branch routes

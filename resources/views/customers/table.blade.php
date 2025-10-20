@@ -3,9 +3,11 @@
         <table class="table table-sm table-hover table-striped align-middle mb-0">
             <thead class="table-light">
                 <tr>
+                    <th>Account #</th>
                     <th>Name</th>
                     <th>Phone</th>
                     <th>CNIC</th>
+                    <th>Profession</th>
                     <th>Branch</th>
                     <th>Status</th>
                     <th>Guarantor</th>
@@ -17,6 +19,9 @@
                 @foreach($customers as $customer)
                 <tr>
                     <td>
+                        <code class="small">{{ $customer->account_number ?? 'N/A' }}</code>
+                    </td>
+                    <td>
                         <div class="d-flex align-items-center">
                             <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
                                 {{ strtoupper(substr($customer->name ?? '', 0, 1)) }}
@@ -25,6 +30,9 @@
                                 <strong>{{ $customer->name ?? 'N/A' }}</strong>
                                 @if($customer->email ?? false)
                                     <br><small class="text-muted">{{ $customer->email }}</small>
+                                @endif
+                                @if($customer->father_husband_name ?? false)
+                                    <br><small class="text-muted">S/O: {{ $customer->father_husband_name }}</small>
                                 @endif
                             </div>
                         </div>
@@ -36,6 +44,9 @@
                     </td>
                     <td>
                         <code class="small">{{ $customer->cnic ?? 'N/A' }}</code>
+                    </td>
+                    <td>
+                        {{ $customer->profession ?? 'N/A' }}
                     </td>
                     <td>
                         @if($customer->branch)
@@ -55,9 +66,12 @@
                     <td>
                         @if($customer->guarantors->count() > 0)
                             @php $guarantor = $customer->guarantors->first() @endphp
-                            <strong>{{ $guarantor->guarantor_name }}</strong>
-                            @if($guarantor->guarantor_phone)
-                                <br><small class="text-muted">{{ $guarantor->guarantor_phone }}</small>
+                            <strong>{{ $guarantor->name }}</strong>
+                            @if($guarantor->phone)
+                                <br><small class="text-muted">{{ $guarantor->phone }}</small>
+                            @endif
+                            @if($customer->guarantors->count() > 1)
+                                <br><small class="text-info">+{{ $customer->guarantors->count() - 1 }} more</small>
                             @endif
                         @else
                             <span class="text-muted">No guarantor</span>

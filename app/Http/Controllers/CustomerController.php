@@ -50,6 +50,9 @@ class CustomerController extends Controller
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('phone', 'like', "%{$search}%")
                   ->orWhere('cnic', 'like', "%{$search}%")
+                  ->orWhere('account_number', 'like', "%{$search}%")
+                  ->orWhere('profession', 'like', "%{$search}%")
+                  ->orWhere('father_husband_name', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%");
             });
         }
@@ -61,7 +64,7 @@ class CustomerController extends Controller
             return response()->json([
                 'success' => true,
                 'html' => view('customers.table', compact('customers'))->render(),
-                'pagination' => $customers->links()->render()
+                'pagination' => $customers->links()->toHtml()
             ]);
         }
 
@@ -76,11 +79,55 @@ class CustomerController extends Controller
     public function store(StoreCustomerRequest $request)
     {
         try {
-            
             $data = $request->validated();
 
-            $guarantorData = [];
-            if (!empty($data['guarantor_name'])) {
+            // Extract guarantor data before creating customer
+            $guarantors = [];
+            
+            // Handle Guarantor 1
+            if (!empty($data['guarantor_1_name'])) {
+                $guarantor1Data = [
+                    'name' => $data['guarantor_1_name'],
+                    'cnic' => $data['guarantor_1_cnic'] ?? null,
+                    'phone' => $data['guarantor_1_phone'] ?? null,
+                    'address' => $data['guarantor_1_address'] ?? null,
+                    'relationship' => $data['guarantor_1_relationship'] ?? null,
+                    'profession' => $data['guarantor_1_profession'] ?? null,
+                    'father_husband_name' => $data['guarantor_1_father_husband_name'] ?? null,
+                ];
+                
+                // Handle guarantor 1 biometric upload
+                if ($request->hasFile('guarantor_1_biometric')) {
+                    $guarantor1Data['biometric_path'] = $request->file('guarantor_1_biometric')
+                        ->store('guarantor-biometrics', 'public');
+                }
+                
+                $guarantors[] = $guarantor1Data;
+            }
+            
+            // Handle Guarantor 2
+            if (!empty($data['guarantor_2_name'])) {
+                $guarantor2Data = [
+                    'name' => $data['guarantor_2_name'],
+                    'cnic' => $data['guarantor_2_cnic'] ?? null,
+                    'phone' => $data['guarantor_2_phone'] ?? null,
+                    'address' => $data['guarantor_2_address'] ?? null,
+                    'relationship' => $data['guarantor_2_relationship'] ?? null,
+                    'profession' => $data['guarantor_2_profession'] ?? null,
+                    'father_husband_name' => $data['guarantor_2_father_husband_name'] ?? null,
+                ];
+                
+                // Handle guarantor 2 biometric upload
+                if ($request->hasFile('guarantor_2_biometric')) {
+                    $guarantor2Data['biometric_path'] = $request->file('guarantor_2_biometric')
+                        ->store('guarantor-biometrics', 'public');
+                }
+                
+                $guarantors[] = $guarantor2Data;
+            }
+
+            // Legacy guarantor support (for backward compatibility)
+            if (!empty($data['guarantor_name']) && empty($guarantors)) {
                 $guarantorData = [
                     'name' => $data['guarantor_name'],
                     'cnic' => $data['guarantor_cnic'] ?? null,
@@ -88,28 +135,30 @@ class CustomerController extends Controller
                     'address' => $data['guarantor_address'] ?? null,
                     'relationship' => $data['guarantor_relation'] ?? null,
                 ];
-                
-                // Remove guarantor fields from customer data
-                unset($data['guarantor_name'], $data['guarantor_cnic'], $data['guarantor_phone'], 
-                      $data['guarantor_address'], $data['guarantor_relation']);
+                $guarantors[] = $guarantorData;
             }
+
+            // Remove guarantor fields from customer data
+            $customerData = array_filter($data, function($key) {
+                return !str_starts_with($key, 'guarantor_');
+            }, ARRAY_FILTER_USE_KEY);
 
             // Handle biometric file upload
             if ($request->hasFile('biometric')) {
-                $data['biometric_path'] = $request->file('biometric')
+                $customerData['biometric_path'] = $request->file('biometric')
                     ->store('customer-biometrics', 'public');
             }
 
             // Handle face photo upload
             if ($request->hasFile('face_photo')) {
-                $data['face_path'] = $request->file('face_photo')
+                $customerData['face_path'] = $request->file('face_photo')
                     ->store('customer-faces', 'public');
             }
 
-            $customer = Customer::create($data);
+            $customer = Customer::create($customerData);
 
-            // Create guarantor if data exists
-            if (!empty($guarantorData)) {
+            // Create guarantors
+            foreach ($guarantors as $guarantorData) {
                 $customer->guarantors()->create($guarantorData);
             }
 
@@ -155,9 +204,53 @@ class CustomerController extends Controller
         try {
             $data = $request->validated();
 
-            // Extract guarantor data
-            $guarantorData = [];
-            if (!empty($data['guarantor_name'])) {
+            // Extract guarantor data before updating customer
+            $guarantors = [];
+            
+            // Handle Guarantor 1
+            if (!empty($data['guarantor_1_name'])) {
+                $guarantor1Data = [
+                    'name' => $data['guarantor_1_name'],
+                    'cnic' => $data['guarantor_1_cnic'] ?? null,
+                    'phone' => $data['guarantor_1_phone'] ?? null,
+                    'address' => $data['guarantor_1_address'] ?? null,
+                    'relationship' => $data['guarantor_1_relationship'] ?? null,
+                    'profession' => $data['guarantor_1_profession'] ?? null,
+                    'father_husband_name' => $data['guarantor_1_father_husband_name'] ?? null,
+                ];
+                
+                // Handle guarantor 1 biometric upload
+                if ($request->hasFile('guarantor_1_biometric')) {
+                    $guarantor1Data['biometric_path'] = $request->file('guarantor_1_biometric')
+                        ->store('guarantor-biometrics', 'public');
+                }
+                
+                $guarantors[] = $guarantor1Data;
+            }
+            
+            // Handle Guarantor 2
+            if (!empty($data['guarantor_2_name'])) {
+                $guarantor2Data = [
+                    'name' => $data['guarantor_2_name'],
+                    'cnic' => $data['guarantor_2_cnic'] ?? null,
+                    'phone' => $data['guarantor_2_phone'] ?? null,
+                    'address' => $data['guarantor_2_address'] ?? null,
+                    'relationship' => $data['guarantor_2_relationship'] ?? null,
+                    'profession' => $data['guarantor_2_profession'] ?? null,
+                    'father_husband_name' => $data['guarantor_2_father_husband_name'] ?? null,
+                ];
+                
+                // Handle guarantor 2 biometric upload
+                if ($request->hasFile('guarantor_2_biometric')) {
+                    $guarantor2Data['biometric_path'] = $request->file('guarantor_2_biometric')
+                        ->store('guarantor-biometrics', 'public');
+                }
+                
+                $guarantors[] = $guarantor2Data;
+            }
+
+            // Legacy guarantor support (for backward compatibility)
+            if (!empty($data['guarantor_name']) && empty($guarantors)) {
                 $guarantorData = [
                     'name' => $data['guarantor_name'],
                     'cnic' => $data['guarantor_cnic'] ?? null,
@@ -165,11 +258,13 @@ class CustomerController extends Controller
                     'address' => $data['guarantor_address'] ?? null,
                     'relationship' => $data['guarantor_relation'] ?? null,
                 ];
-                
-                // Remove guarantor fields from customer data
-                unset($data['guarantor_name'], $data['guarantor_cnic'], $data['guarantor_phone'], 
-                      $data['guarantor_address'], $data['guarantor_relation']);
+                $guarantors[] = $guarantorData;
             }
+
+            // Remove guarantor fields from customer data
+            $customerData = array_filter($data, function($key) {
+                return !str_starts_with($key, 'guarantor_');
+            }, ARRAY_FILTER_USE_KEY);
 
             // Handle biometric file upload
             if ($request->hasFile('biometric')) {
@@ -178,7 +273,7 @@ class CustomerController extends Controller
                     Storage::disk('public')->delete($customer->biometric_path);
                 }
                 
-                $data['biometric_path'] = $request->file('biometric')
+                $customerData['biometric_path'] = $request->file('biometric')
                     ->store('customer-biometrics', 'public');
             }
 
@@ -189,18 +284,18 @@ class CustomerController extends Controller
                     Storage::disk('public')->delete($customer->face_path);
                 }
                 
-                $data['face_path'] = $request->file('face_photo')
+                $customerData['face_path'] = $request->file('face_photo')
                     ->store('customer-faces', 'public');
             }
 
-            $customer->update($data);
+            $customer->update($customerData);
 
-            // Update or create guarantor
-            if (!empty($guarantorData)) {
-                $customer->guarantors()->updateOrCreate([], $guarantorData);
-            } else {
-                // Remove guarantor if no data provided
-                $customer->guarantors()->delete();
+            // Delete existing guarantors and create new ones
+            $customer->guarantors()->delete();
+            
+            // Create new guarantors
+            foreach ($guarantors as $guarantorData) {
+                $customer->guarantors()->create($guarantorData);
             }
 
             if ($request->ajax()) {
@@ -232,24 +327,36 @@ class CustomerController extends Controller
     {
         if ($request->ajax()) {
             $customer->load(['branch', 'guarantors']);
-            $guarantor = $customer->guarantors->first();
             
             return response()->json([
                 'success' => true,
                 'customer' => [
                     'id' => $customer->id,
                     'branch_id' => $customer->branch_id,
+                    'account_number' => $customer->account_number,
                     'name' => $customer->name,
                     'email' => $customer->email,
                     'phone' => $customer->phone,
                     'cnic' => $customer->cnic,
+                    'profession' => $customer->profession,
+                    'father_husband_name' => $customer->father_husband_name,
                     'address' => $customer->address,
                     'is_active' => $customer->is_active,
-                    'guarantor_name' => $guarantor?->guarantor_name,
-                    'guarantor_phone' => $guarantor?->guarantor_phone,
-                    'guarantor_cnic' => $guarantor?->guarantor_cnic,
-                    'guarantor_address' => $guarantor?->guarantor_address,
-                    'guarantor_relation' => $guarantor?->guarantor_relation,
+                    'guarantors' => $customer->guarantors->map(function ($guarantor) {
+                        return [
+                            'id' => $guarantor->id,
+                            'account_number' => $guarantor->account_number,
+                            'name' => $guarantor->name,
+                            'email' => $guarantor->email,
+                            'phone' => $guarantor->phone,
+                            'cnic' => $guarantor->cnic,
+                            'profession' => $guarantor->profession,
+                            'father_husband_name' => $guarantor->father_husband_name,
+                            'relation' => $guarantor->relation,
+                            'address' => $guarantor->address,
+                            'biometric_path' => $guarantor->biometric_path,
+                        ];
+                    })
                 ]
             ]);
         }

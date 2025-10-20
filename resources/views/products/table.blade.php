@@ -5,7 +5,8 @@
                 <tr>
                     <th>Name</th>
                     <th>Model</th>
-                    <th>Brand</th>
+                    <th>SKU</th>
+                    <th>Serial No.</th>
                     <th>Category</th>
                     <th>Price</th>
                     <th>Stock</th>
@@ -31,7 +32,20 @@
                         </div>
                     </td>
                     <td>{{ $product->model }}</td>
-                    <td>{{ $product->brand }}</td>
+                    <td>
+                        @if($product->sku)
+                            <span class="badge bg-secondary">{{ $product->sku }}</span>
+                        @else
+                            <span class="text-muted">—</span>
+                        @endif
+                    </td>
+                    <td>
+                        @if($product->serial_number)
+                            <code class="text-primary">{{ $product->serial_number }}</code>
+                        @else
+                            <span class="text-muted">—</span>
+                        @endif
+                    </td>
                     <td>
                         @php $categoryDisplay = $product->category_display; @endphp
                         @if($categoryDisplay['badge_class'] === 'custom')
@@ -79,6 +93,10 @@
                                 data-model="{{ $product->model }}"
                                 data-brand="{{ $product->brand }}"
                                 data-price="{{ $product->price }}"
+                                data-purchase-cost="{{ $product->purchase_cost ?? '' }}"
+                                data-purchased-from="{{ $product->purchased_from ?? '' }}"
+                                data-sku="{{ $product->sku ?? '' }}"
+                                data-serial-number="{{ $product->serial_number ?? '' }}"
                                 data-stock="{{ $product->stock_quantity }}"
                                 data-description="{{ $product->description ?? '' }}"
                                 data-active="{{ $product->active ? '1' : '0' }}">

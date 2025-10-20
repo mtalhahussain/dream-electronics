@@ -135,7 +135,7 @@
                         </div>
                         
                         <div class="col-md-6">
-                            <label for="price" class="form-label">Price <span class="text-danger">*</span></label>
+                            <label for="price" class="form-label">Selling Price <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text">Rs.</span>
                                 <input type="number" class="form-control" id="price" name="price" step="0.01" min="0" placeholder="0.00" required>
@@ -144,9 +144,42 @@
                         </div>
                         
                         <div class="col-md-6">
+                            <label for="purchase_cost" class="form-label">Purchase Cost</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rs.</span>
+                                <input type="number" class="form-control" id="purchase_cost" name="purchase_cost" step="0.01" min="0" placeholder="0.00">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="purchased_from" name="purchased_from" placeholder="Purchased From">
+                                <label for="purchased_from">Purchased From</label>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="sku" name="sku" placeholder="SKU">
+                                <label for="sku">SKU</label>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="serial_number" name="serial_number" placeholder="Serial Number">
+                                <label for="serial_number">Serial Number</label>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
                             <div class="form-floating">
                                 <input type="number" class="form-control" id="stock_quantity" name="stock_quantity" min="0" placeholder="Stock Quantity" required>
-                                <label for="stock_quantity">Stock Quantity <span class="text-danger">*</span></label>
+                                <label for="stock_quantity">Quantity <span class="text-danger">*</span></label>
                                 <div class="invalid-feedback"></div>
                             </div>
                         </div>
@@ -439,8 +472,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <tr>
                             <th>Name</th>
                             <th>Model</th>
-                            <th>Brand</th>
-                            <th>Category</th>
+                            <th>SKU</th>
+                            <th>Serial No.</th>
                             <th>Price</th>
                             <th>Stock</th>
                             <th>Status</th>
@@ -470,7 +503,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </td>
                     <td>${product.model}</td>
-                    <td>${product.brand}</td>
+                    <td>
+                        ${product.sku ? `<span class="badge bg-secondary">${product.sku}</span>` : '<span class="text-muted">—</span>'}
+                    </td>
+                    <td>
+                        ${product.serial_number ? `<code class="text-primary">${product.serial_number}</code>` : '<span class="text-muted">—</span>'}
+                    </td>
                     <td>
                         ${(() => {
                             const categoryDisplay = product.category_display;
@@ -510,9 +548,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                 data-model="${product.model}"
                                 data-brand="${product.brand}"
                                 data-price="${product.price}"
+                                data-purchase-cost="${product.purchase_cost || ''}"
+                                data-purchased-from="${product.purchased_from || ''}"
+                                data-sku="${product.sku || ''}"
+                                data-serial-number="${product.serial_number || ''}"
                                 data-stock="${product.stock_quantity}"
                                 data-description="${product.description || ''}"
-                                data-active="${product.active ? '1' : '0'}">>
+                                data-active="${product.active ? '1' : '0'}">>>
                             <i class="bi bi-pencil"></i>
                         </button>
                         ${product.purchase_invoice ? `
@@ -607,6 +649,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('model').value = btn.getAttribute('data-model');
         document.getElementById('brand').value = btn.getAttribute('data-brand');
         document.getElementById('price').value = btn.getAttribute('data-price');
+        document.getElementById('purchase_cost').value = btn.getAttribute('data-purchase-cost');
+        document.getElementById('purchased_from').value = btn.getAttribute('data-purchased-from');
+        document.getElementById('sku').value = btn.getAttribute('data-sku');
+        document.getElementById('serial_number').value = btn.getAttribute('data-serial-number');
         document.getElementById('stock_quantity').value = btn.getAttribute('data-stock');
         document.getElementById('description').value = btn.getAttribute('data-description');
         document.getElementById('active').checked = btn.getAttribute('data-active') === '1';

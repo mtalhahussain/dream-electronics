@@ -18,6 +18,10 @@ class Product extends Model
         'model',
         'brand',
         'price',
+        'purchase_cost',
+        'purchased_from',
+        'sku',
+        'serial_number',
         'stock_quantity',
         'description',
         'purchase_invoice',
@@ -30,6 +34,7 @@ class Product extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'purchase_cost' => 'decimal:2',
         'stock_quantity' => 'integer',
         'active' => 'boolean',
     ];

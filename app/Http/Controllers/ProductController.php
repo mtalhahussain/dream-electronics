@@ -50,8 +50,10 @@ class ProductController extends Controller
             $query->where(function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('model', 'like', "%{$search}%")
+                  ->orWhere('brand', 'like', "%{$search}%")
                   ->orWhere('sku', 'like', "%{$search}%")
-                  ->orWhere('serial_no', 'like', "%{$search}%");
+                  ->orWhere('serial_number', 'like', "%{$search}%")
+                  ->orWhere('purchased_from', 'like', "%{$search}%");
             });
         }
 

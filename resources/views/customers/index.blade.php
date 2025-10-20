@@ -146,6 +146,22 @@
                             <div class="invalid-feedback"></div>
                         </div>
                         
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="profession" name="profession" placeholder="Profession">
+                                <label for="profession">Profession</label>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="father_husband_name" name="father_husband_name" placeholder="Father/Husband Name">
+                                <label for="father_husband_name">Father/Husband Name</label>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
                         <div class="col-12">
                             <div class="form-floating">
                                 <textarea class="form-control" id="address" name="address" placeholder="Complete Address" style="height: 80px" required></textarea>
@@ -179,46 +195,152 @@
                             <div class="invalid-feedback"></div>
                         </div>
                         
-                        <!-- Guarantor Information -->
+                        <!-- Guarantor 1 Information -->
                         <div class="col-12 mt-4">
-                            <h6 class="text-secondary border-bottom pb-2 mb-3">Guarantor Information</h6>
+                            <h6 class="text-secondary border-bottom pb-2 mb-3">Guarantor 1 Information</h6>
                         </div>
                         
                         <div class="col-md-6">
                             <div class="form-floating">
-                                <input type="text" class="form-control" id="guarantor_name" name="guarantor_name" placeholder="Guarantor Name">
-                                <label for="guarantor_name">Guarantor Name</label>
+                                <input type="text" class="form-control" id="guarantor_1_name" name="guarantor_1_name" placeholder="Guarantor 1 Name">
+                                <label for="guarantor_1_name">Guarantor 1 Name</label>
                                 <div class="invalid-feedback"></div>
                             </div>
                         </div>
                         
                         <div class="col-md-6">
-                            <label for="guarantor_phone" class="form-label">Guarantor Phone</label>
+                            <div class="form-floating">
+                                <input type="email" class="form-control" id="guarantor_1_email" name="guarantor_1_email" placeholder="Guarantor 1 Email">
+                                <label for="guarantor_1_email">Guarantor 1 Email</label>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="guarantor_1_phone" class="form-label">Guarantor 1 Phone</label>
                             <div class="input-group">
                                 <span class="input-group-text">+92</span>
-                                <input type="tel" class="form-control" id="guarantor_phone" name="guarantor_phone" placeholder="3001234567">
+                                <input type="tel" class="form-control" id="guarantor_1_phone" name="guarantor_1_phone" placeholder="3001234567">
                                 <div class="invalid-feedback"></div>
                             </div>
                         </div>
                         
                         <div class="col-md-6">
-                            <label for="guarantor_cnic" class="form-label">Guarantor CNIC</label>
-                            <input type="text" class="form-control" id="guarantor_cnic" name="guarantor_cnic" placeholder="12345-6789012-3" pattern="[0-9]{5}-[0-9]{7}-[0-9]{1}">
+                            <label for="guarantor_1_cnic" class="form-label">Guarantor 1 CNIC</label>
+                            <input type="text" class="form-control" id="guarantor_1_cnic" name="guarantor_1_cnic" placeholder="12345-6789012-3" pattern="[0-9]{5}-[0-9]{7}-[0-9]{1}">
                             <div class="invalid-feedback"></div>
                         </div>
                         
                         <div class="col-md-6">
                             <div class="form-floating">
-                                <input type="text" class="form-control" id="guarantor_relation" name="guarantor_relation" placeholder="Relation">
-                                <label for="guarantor_relation">Relation to Customer</label>
+                                <input type="text" class="form-control" id="guarantor_1_profession" name="guarantor_1_profession" placeholder="Guarantor 1 Profession">
+                                <label for="guarantor_1_profession">Guarantor 1 Profession</label>
                                 <div class="invalid-feedback"></div>
                             </div>
                         </div>
                         
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="guarantor_1_father_husband_name" name="guarantor_1_father_husband_name" placeholder="Father/Husband Name">
+                                <label for="guarantor_1_father_husband_name">Father/Husband Name</label>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="guarantor_1_relation" name="guarantor_1_relation" placeholder="Relation">
+                                <label for="guarantor_1_relation">Relation to Customer</label>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="guarantor_1_biometric" class="form-label">Guarantor 1 Biometric</label>
+                            <input type="file" class="form-control" id="guarantor_1_biometric" name="guarantor_1_biometric" accept="image/*">
+                            <div class="form-text">Upload guarantor biometric image</div>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        
                         <div class="col-12">
                             <div class="form-floating">
-                                <textarea class="form-control" id="guarantor_address" name="guarantor_address" placeholder="Guarantor Address" style="height: 60px"></textarea>
-                                <label for="guarantor_address">Guarantor Address</label>
+                                <textarea class="form-control" id="guarantor_1_address" name="guarantor_1_address" placeholder="Guarantor 1 Address" style="height: 60px"></textarea>
+                                <label for="guarantor_1_address">Guarantor 1 Address</label>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Guarantor 2 Information -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-secondary border-bottom pb-2 mb-3">Guarantor 2 Information (Optional)</h6>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="guarantor_2_name" name="guarantor_2_name" placeholder="Guarantor 2 Name">
+                                <label for="guarantor_2_name">Guarantor 2 Name</label>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="email" class="form-control" id="guarantor_2_email" name="guarantor_2_email" placeholder="Guarantor 2 Email">
+                                <label for="guarantor_2_email">Guarantor 2 Email</label>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="guarantor_2_phone" class="form-label">Guarantor 2 Phone</label>
+                            <div class="input-group">
+                                <span class="input-group-text">+92</span>
+                                <input type="tel" class="form-control" id="guarantor_2_phone" name="guarantor_2_phone" placeholder="3001234567">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="guarantor_2_cnic" class="form-label">Guarantor 2 CNIC</label>
+                            <input type="text" class="form-control" id="guarantor_2_cnic" name="guarantor_2_cnic" placeholder="12345-6789012-3" pattern="[0-9]{5}-[0-9]{7}-[0-9]{1}">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="guarantor_2_profession" name="guarantor_2_profession" placeholder="Guarantor 2 Profession">
+                                <label for="guarantor_2_profession">Guarantor 2 Profession</label>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="guarantor_2_father_husband_name" name="guarantor_2_father_husband_name" placeholder="Father/Husband Name">
+                                <label for="guarantor_2_father_husband_name">Father/Husband Name</label>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="guarantor_2_relation" name="guarantor_2_relation" placeholder="Relation">
+                                <label for="guarantor_2_relation">Relation to Customer</label>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="guarantor_2_biometric" class="form-label">Guarantor 2 Biometric</label>
+                            <input type="file" class="form-control" id="guarantor_2_biometric" name="guarantor_2_biometric" accept="image/*">
+                            <div class="form-text">Upload guarantor biometric image</div>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="form-floating">
+                                <textarea class="form-control" id="guarantor_2_address" name="guarantor_2_address" placeholder="Guarantor 2 Address" style="height: 60px"></textarea>
+                                <label for="guarantor_2_address">Guarantor 2 Address</label>
                                 <div class="invalid-feedback"></div>
                             </div>
                         </div>
@@ -364,13 +486,35 @@
                 document.getElementById('email').value = customer.email || '';
                 document.getElementById('phone').value = customer.phone || '';
                 document.getElementById('cnic').value = customer.cnic || '';
+                document.getElementById('profession').value = customer.profession || '';
+                document.getElementById('father_husband_name').value = customer.father_husband_name || '';
                 document.getElementById('address').value = customer.address || '';
                 document.getElementById('is_active').value = customer.is_active ? '1' : '0';
-                document.getElementById('guarantor_name').value = customer.guarantor_name || '';
-                document.getElementById('guarantor_phone').value = customer.guarantor_phone || '';
-                document.getElementById('guarantor_cnic').value = customer.guarantor_cnic || '';
-                document.getElementById('guarantor_address').value = customer.guarantor_address || '';
-                document.getElementById('guarantor_relation').value = customer.guarantor_relation || '';
+                
+                // Populate guarantor fields
+                if (customer.guarantors && customer.guarantors.length > 0) {
+                    const guarantor1 = customer.guarantors[0];
+                    document.getElementById('guarantor_1_name').value = guarantor1.name || '';
+                    document.getElementById('guarantor_1_email').value = guarantor1.email || '';
+                    document.getElementById('guarantor_1_phone').value = guarantor1.phone || '';
+                    document.getElementById('guarantor_1_cnic').value = guarantor1.cnic || '';
+                    document.getElementById('guarantor_1_profession').value = guarantor1.profession || '';
+                    document.getElementById('guarantor_1_father_husband_name').value = guarantor1.father_husband_name || '';
+                    document.getElementById('guarantor_1_relation').value = guarantor1.relation || '';
+                    document.getElementById('guarantor_1_address').value = guarantor1.address || '';
+                    
+                    if (customer.guarantors.length > 1) {
+                        const guarantor2 = customer.guarantors[1];
+                        document.getElementById('guarantor_2_name').value = guarantor2.name || '';
+                        document.getElementById('guarantor_2_email').value = guarantor2.email || '';
+                        document.getElementById('guarantor_2_phone').value = guarantor2.phone || '';
+                        document.getElementById('guarantor_2_cnic').value = guarantor2.cnic || '';
+                        document.getElementById('guarantor_2_profession').value = guarantor2.profession || '';
+                        document.getElementById('guarantor_2_father_husband_name').value = guarantor2.father_husband_name || '';
+                        document.getElementById('guarantor_2_relation').value = guarantor2.relation || '';
+                        document.getElementById('guarantor_2_address').value = guarantor2.address || '';
+                    }
+                }
                 
                 // Show modal
                 const modal = new bootstrap.Modal(document.getElementById('customerModal'));
