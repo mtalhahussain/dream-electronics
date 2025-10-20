@@ -1,63 +1,104 @@
 <section>
-    <header>
-        <h2 class="text-lg font-medium text-gray-900">
-            {{ __('Profile Information') }}
-        </h2>
-
-        <p class="mt-1 text-sm text-gray-600">
-            {{ __("Update your account's profile information and email address.") }}
-        </p>
-    </header>
-
     <form id="send-verification" method="post" action="{{ route('verification.send') }}">
         @csrf
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
+    <form method="post" action="{{ route('profile.update') }}">
         @csrf
         @method('patch')
 
-        <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
-            <x-input-error class="mt-2" :messages="$errors->get('name')" />
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="name" class="form-label">
+                    <i class="bi bi-person me-2"></i>Full Name
+                </label>
+                <input 
+                    id="name" 
+                    name="name" 
+                    type="text" 
+                    class="form-control @error('name') is-invalid @enderror" 
+                    value="{{ old('name', $user->name) }}" 
+                    required 
+                    autofocus 
+                    autocomplete="name"
+                    placeholder="Enter your full name"
+                />
+                @error('name')
+                    <div class="invalid-feedback">
+                        <i class="bi bi-exclamation-triangle me-1"></i>{{ $message }}
+                    </div>
+                @enderror
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <label for="email" class="form-label">
+                    <i class="bi bi-envelope me-2"></i>Email Address
+                </label>
+                <input 
+                    id="email" 
+                    name="email" 
+                    type="email" 
+                    class="form-control @error('email') is-invalid @enderror" 
+                    value="{{ old('email', $user->email) }}" 
+                    required 
+                    autocomplete="username"
+                    placeholder="Enter your email address"
+                />
+                @error('email')
+                    <div class="invalid-feedback">
+                        <i class="bi bi-exclamation-triangle me-1"></i>{{ $message }}
+                    </div>
+                @enderror
+            </div>
         </div>
 
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
-            <x-input-error class="mt-2" :messages="$errors->get('email')" />
-
-            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                <div>
-                    <p class="text-sm mt-2 text-gray-800">
-                        {{ __('Your email address is unverified.') }}
-
-                        <button form="send-verification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {{ __('Click here to re-send the verification email.') }}
-                        </button>
-                    </p>
-
-                    @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 font-medium text-sm text-green-600">
-                            {{ __('A new verification link has been sent to your email address.') }}
-                        </p>
-                    @endif
+        @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
+            <div class="alert alert-warning" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <div>
+                        <strong>Email Verification Required</strong><br>
+                        <small>Your email address is unverified. 
+                            <button 
+                                form="send-verification" 
+                                class="btn btn-link p-0 align-baseline text-decoration-underline"
+                                type="submit"
+                            >
+                                Click here to re-send the verification email.
+                            </button>
+                        </small>
+                    </div>
                 </div>
-            @endif
-        </div>
+                
+                @if (session('status') === 'verification-link-sent')
+                    <div class="mt-2">
+                        <div class="alert alert-success alert-sm mb-0">
+                            <i class="bi bi-check-circle me-1"></i>
+                            A new verification link has been sent to your email address.
+                        </div>
+                    </div>
+                @endif
+            </div>
+        @endif
 
-        <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Save') }}</x-primary-button>
+        <div class="d-flex align-items-center justify-content-between">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-circle me-2"></i>Save Changes
+            </button>
 
             @if (session('status') === 'profile-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600"
-                >{{ __('Saved.') }}</p>
+                <div class="alert alert-success alert-sm mb-0 fade show" id="success-message">
+                    <i class="bi bi-check-circle me-1"></i>Profile updated successfully!
+                </div>
+                <script>
+                    setTimeout(function() {
+                        const alert = document.getElementById('success-message');
+                        if (alert) {
+                            alert.classList.remove('show');
+                            setTimeout(() => alert.remove(), 150);
+                        }
+                    }, 3000);
+                </script>
             @endif
         </div>
     </form>
