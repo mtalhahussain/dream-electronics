@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\Product;
 
 class StoreSaleRequest extends FormRequest
 {
@@ -18,7 +19,25 @@ class StoreSaleRequest extends FormRequest
             'customer_id' => 'required|exists:customers,id',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity' => [
+                'required',
+                'integer',
+                'min:1',
+                function ($attribute, $value, $fail) {
+                    // Extract the index from the attribute name (items.0.quantity -> 0)
+                    $index = explode('.', $attribute)[1];
+                    $productId = $this->input("items.{$index}.product_id");
+                    
+                    if ($productId) {
+                        $product = Product::find($productId);
+                        if ($product && $product->stock_quantity !== null) {
+                            if ($value > $product->stock_quantity) {
+                                $fail("Requested quantity ({$value}) exceeds available stock ({$product->stock_quantity}) for {$product->name}.");
+                            }
+                        }
+                    }
+                }
+            ],
             'items.*.unit_price' => 'required|numeric|min:0',
             'total_price' => 'required|numeric|min:0',
             'duration_months' => 'required|in:6,10,12',
@@ -41,6 +60,7 @@ class StoreSaleRequest extends FormRequest
             'items.*.product_id.exists' => 'Selected product does not exist.',
             'items.*.quantity.required' => 'Quantity is required for each item.',
             'items.*.quantity.min' => 'Quantity must be at least 1.',
+            'items.*.quantity.integer' => 'Quantity must be a valid number.',
             'items.*.unit_price.required' => 'Unit price is required for each item.',
             'items.*.unit_price.min' => 'Unit price must be greater than 0.',
             'total_price.required' => 'Total price is required.',

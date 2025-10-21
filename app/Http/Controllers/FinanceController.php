@@ -221,8 +221,7 @@ class FinanceController extends Controller
     private function getStockCredits($from, $to, $make = null)
     {
         $query = StockCredit::with('product')
-            ->whereBetween('purchase_date', [$from, $to])
-            ->where('total_cost', 0); // Items received without payment
+            ->whereBetween('purchase_date', [$from, $to]);
 
         if ($make) {
             $query->whereHas('product', function ($q) use ($make) {

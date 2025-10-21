@@ -59,13 +59,9 @@
             <a href="{{ route('stock-credits.index') }}" class="btn btn-outline-info">
                 <i class="bi bi-box me-2"></i>Manage Stock Credits
             </a>
-            <a href="{{ route('salary-payments.index') }}" class="btn btn-outline-success">
-                <i class="bi bi-people me-2"></i>Manage Salaries
-            </a>
+
         </div>
-        <a href="{{ route('finance.summary') }}" class="btn btn-outline-primary">
-            <i class="bi bi-bar-chart me-2"></i>View Summary
-        </a>
+
     </div>
 </div>
 
@@ -349,7 +345,7 @@
     <div class="tab-pane fade {{ $activeSection == 'stock_credit' ? 'show active' : '' }}" id="stock-credit-tab">
         <div class="card">
             <div class="card-header bg-secondary text-white">
-                <h6 class="mb-0"><i class="bi bi-box me-2"></i>Stock Credit (Items received without payment)</h6>
+                <h6 class="mb-0"><i class="bi bi-box me-2"></i>Stock Credit (Inventory Purchases)</h6>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -360,6 +356,8 @@
                                 <th>Product</th>
                                 <th>Supplier</th>
                                 <th>Quantity</th>
+                                <th>Unit Cost</th>
+                                <th>Total Cost</th>
                                 <th>Invoice #</th>
                             </tr>
                         </thead>
@@ -375,11 +373,13 @@
                                 </td>
                                 <td>{{ $credit->supplier ?? 'N/A' }}</td>
                                 <td>{{ $credit->quantity }}</td>
+                                <td>Rs. {{ number_format($credit->unit_cost, 2) }}</td>
+                                <td><strong>Rs. {{ number_format($credit->total_cost, 2) }}</strong></td>
                                 <td>{{ $credit->invoice_number ?? 'N/A' }}</td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted">No stock credit items in this period</td>
+                                <td colspan="7" class="text-center text-muted">No stock credit items in this period</td>
                             </tr>
                             @endforelse
                         </tbody>

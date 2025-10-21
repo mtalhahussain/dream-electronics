@@ -22,10 +22,23 @@ class DashboardController extends Controller
             ->whereBetween('transaction_date', [$startOfMonth, $endOfMonth])
             ->sum('amount') ?? 0;
 
-        $expensesThisMonth = DB::table('finance_transactions')
+        // Calculate expenses from finance transactions (primary source) and expenses table (backup)
+        $expensesFromTransactions = DB::table('finance_transactions')
             ->where('type', 'out')
             ->whereBetween('transaction_date', [$startOfMonth, $endOfMonth])
             ->sum('amount') ?? 0;
+            
+        $expensesFromExpensesTable = DB::table('expenses')
+            ->whereBetween('expense_date', [$startOfMonth, $endOfMonth])
+            ->whereNotExists(function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('finance_transactions')
+                    ->whereRaw('finance_transactions.reference_type = "App\\\\Models\\\\Expense"')
+                    ->whereRaw('finance_transactions.reference_id = expenses.id');
+            })
+            ->sum('amount') ?? 0;
+            
+        $expensesThisMonth = $expensesFromTransactions + $expensesFromExpensesTable;
 
         $outstandingBalance = DB::table('sales')
             ->sum('remaining_balance') ?? 0;
@@ -53,10 +66,23 @@ class DashboardController extends Controller
                 ->whereBetween('transaction_date', [$monthStart, $monthEnd])
                 ->sum('amount') ?? 0;
             
-            $expenses = DB::table('finance_transactions')
+            // Calculate expenses from finance transactions and expenses table
+            $expensesFromTransactions = DB::table('finance_transactions')
                 ->where('type', 'out')
                 ->whereBetween('transaction_date', [$monthStart, $monthEnd])
                 ->sum('amount') ?? 0;
+                
+            $expensesFromExpensesTable = DB::table('expenses')
+                ->whereBetween('expense_date', [$monthStart, $monthEnd])
+                ->whereNotExists(function ($query) {
+                    $query->select(DB::raw(1))
+                        ->from('finance_transactions')
+                        ->whereRaw('finance_transactions.reference_type = "App\\\\Models\\\\Expense"')
+                        ->whereRaw('finance_transactions.reference_id = expenses.id');
+                })
+                ->sum('amount') ?? 0;
+                
+            $expenses = $expensesFromTransactions + $expensesFromExpensesTable;
             
             $collectionsData[] = $collections;
             $expensesData[] = $expenses;

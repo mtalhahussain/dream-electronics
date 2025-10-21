@@ -52,7 +52,7 @@
                             </h6>
                             <ul class="mb-0">
                                 <li>All your personal data will be permanently deleted</li>
-                                <li>Your access to Dream Electronics system will be revoked</li>
+                                <li>Your access to {{ \App\Models\Setting::get('company_name', 'Dream Electronics') }} system will be revoked</li>
                                 <li>This action cannot be reversed</li>
                                 <li>Any associated records will be anonymized</li>
                             </ul>

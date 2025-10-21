@@ -110,6 +110,8 @@ class ProductController extends Controller
     public function store(StoreProductRequest $request)
     {
         try {
+            \DB::beginTransaction();
+            
             $data = $request->validated();
 
             if ($request->hasFile('purchase_invoice')) {
@@ -118,6 +120,38 @@ class ProductController extends Controller
             }
 
             $product = Product::create($data);
+
+            // Create StockCredit record if initial stock quantity is provided
+            if ($product->stock_quantity > 0) {
+                $unitCost = $product->purchase_cost ?? 0;
+                $totalCost = $product->stock_quantity * $unitCost;
+                
+                \App\Models\StockCredit::create([
+                    'product_id' => $product->id,
+                    'quantity' => $product->stock_quantity,
+                    'unit_cost' => $unitCost,
+                    'total_cost' => $totalCost,
+                    'supplier' => $product->purchased_from ?? 'Initial Stock',
+                    'invoice_number' => null,
+                    'purchase_date' => now()->toDateString()
+                ]);
+
+                // Create finance transaction if there's a cost
+                if ($totalCost > 0) {
+                    \App\Models\FinanceTransaction::create([
+                        'branch_id' => $product->branch_id,
+                        'type' => 'out',
+                        'category' => 'Inventory Purchase',
+                        'amount' => $totalCost,
+                        'description' => "Initial stock for {$product->name} ({$product->model})",
+                        'transaction_date' => now()->toDateString(),
+                        'reference_id' => $product->id,
+                        'reference_type' => 'product',
+                    ]);
+                }
+            }
+
+            \DB::commit();
 
             // For AJAX requests, return JSON
             if ($request->wantsJson() || $request->ajax()) {
@@ -132,6 +166,8 @@ class ProductController extends Controller
                 ->with('success', 'Product created successfully');
 
         } catch (\Exception $e) {
+            \DB::rollBack();
+            
             // For AJAX requests, return JSON error
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
@@ -267,6 +303,27 @@ class ProductController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update product status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function checkStock(Product $product)
+    {
+        try {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'product_id' => $product->id,
+                    'name' => $product->name,
+                    'stock_quantity' => $product->stock_quantity ?? 0,
+                    'price' => $product->price,
+                    'has_stock' => ($product->stock_quantity ?? 0) > 0
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to check stock: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -28,6 +28,7 @@ Route::middleware(['auth'])->group(function () {
     // Product routes
     Route::resource('products', ProductController::class)->only(['index','store','update','destroy']);
     Route::patch('/products/{product}/toggle-active', [ProductController::class, 'toggle'])->name('products.toggle');
+    Route::get('/products/{product}/stock', [ProductController::class, 'checkStock'])->name('products.stock');
     
     // Category routes
     Route::resource('categories', CategoryController::class)->only(['index','store','update','destroy']);
@@ -45,7 +46,6 @@ Route::middleware(['auth'])->group(function () {
     
     // Finance routes
     Route::get('finance', [FinanceController::class, 'index'])->name('finance.index');
-    Route::get('finance/summary', [FinanceController::class, 'summary'])->name('finance.summary');
     
     // Expense Management routes
     Route::get('expenses', [ExpenseController::class, 'index'])->name('expenses.index');

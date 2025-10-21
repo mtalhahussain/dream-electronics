@@ -356,22 +356,41 @@
         formatCNIC(e.target);
     });
     
-    document.getElementById('guarantor_cnic').addEventListener('input', function(e) {
-        formatCNIC(e.target);
-    });
+    if (document.getElementById('guarantor_1_cnic')) {
+        document.getElementById('guarantor_1_cnic').addEventListener('input', function(e) {
+            formatCNIC(e.target);
+        });
+    }
+    
+    if (document.getElementById('guarantor_2_cnic')) {
+        document.getElementById('guarantor_2_cnic').addEventListener('input', function(e) {
+            formatCNIC(e.target);
+        });
+    }
     
     document.getElementById('phone').addEventListener('input', function(e) {
         formatPhone(e.target);
     });
     
-    document.getElementById('guarantor_phone').addEventListener('input', function(e) {
-        formatPhone(e.target);
-    });
+    if (document.getElementById('guarantor_1_phone')) {
+        document.getElementById('guarantor_1_phone').addEventListener('input', function(e) {
+            formatPhone(e.target);
+        });
+    }
+    
+    if (document.getElementById('guarantor_2_phone')) {
+        document.getElementById('guarantor_2_phone').addEventListener('input', function(e) {
+            formatPhone(e.target);
+        });
+    }
 
     // Reset form when modal is closed
     document.getElementById('customerModal').addEventListener('hidden.bs.modal', function() {
         document.getElementById('customerForm').reset();
         clearValidationErrors();
+        // Reset to first step
+        currentStep = 1;
+        showStep(currentStep);
     });
     function editCustomer(customerId) {
         // Fetch customer data
@@ -386,8 +405,9 @@
             if (data.success) {
                 const customer = data.customer;
                 
-                // Update modal title
-                document.getElementById('customerModalLabel').textContent = 'Edit Customer';
+                // Reset to first step
+                currentStep = 1;
+                showStep(currentStep);
                 
                 // Set form action and method
                 document.getElementById('customerForm').action = `/customers/${customerId}`;
@@ -400,13 +420,35 @@
                 document.getElementById('email').value = customer.email || '';
                 document.getElementById('phone').value = customer.phone || '';
                 document.getElementById('cnic').value = customer.cnic || '';
+                document.getElementById('profession').value = customer.profession || '';
+                document.getElementById('father_husband_name').value = customer.father_husband_name || '';
                 document.getElementById('address').value = customer.address || '';
                 document.getElementById('is_active').value = customer.is_active ? '1' : '0';
-                document.getElementById('guarantor_name').value = customer.guarantor_name || '';
-                document.getElementById('guarantor_phone').value = customer.guarantor_phone || '';
-                document.getElementById('guarantor_cnic').value = customer.guarantor_cnic || '';
-                document.getElementById('guarantor_address').value = customer.guarantor_address || '';
-                document.getElementById('guarantor_relation').value = customer.guarantor_relation || '';
+                
+                // Populate guarantor fields
+                if (customer.guarantors && customer.guarantors.length > 0) {
+                    const guarantor1 = customer.guarantors[0];
+                    document.getElementById('guarantor_1_name').value = guarantor1.name || '';
+                    document.getElementById('guarantor_1_email').value = guarantor1.email || '';
+                    document.getElementById('guarantor_1_phone').value = guarantor1.phone || '';
+                    document.getElementById('guarantor_1_cnic').value = guarantor1.cnic || '';
+                    document.getElementById('guarantor_1_profession').value = guarantor1.profession || '';
+                    document.getElementById('guarantor_1_father_husband_name').value = guarantor1.father_husband_name || '';
+                    document.getElementById('guarantor_1_relation').value = guarantor1.relation || '';
+                    document.getElementById('guarantor_1_address').value = guarantor1.address || '';
+                    
+                    if (customer.guarantors.length > 1) {
+                        const guarantor2 = customer.guarantors[1];
+                        document.getElementById('guarantor_2_name').value = guarantor2.name || '';
+                        document.getElementById('guarantor_2_email').value = guarantor2.email || '';
+                        document.getElementById('guarantor_2_phone').value = guarantor2.phone || '';
+                        document.getElementById('guarantor_2_cnic').value = guarantor2.cnic || '';
+                        document.getElementById('guarantor_2_profession').value = guarantor2.profession || '';
+                        document.getElementById('guarantor_2_father_husband_name').value = guarantor2.father_husband_name || '';
+                        document.getElementById('guarantor_2_relation').value = guarantor2.relation || '';
+                        document.getElementById('guarantor_2_address').value = guarantor2.address || '';
+                    }
+                }
                 
                 // Show modal
                 const modal = new bootstrap.Modal(document.getElementById('customerModal'));

@@ -420,17 +420,50 @@ document.addEventListener('DOMContentLoaded', function() {
             const selectedOption = this.options[this.selectedIndex];
             if (selectedOption.dataset.price) {
                 priceInput.value = selectedOption.dataset.price;
-                const stock = selectedOption.dataset.stock;
+                const stock = selectedOption.dataset.stock || 0;
                 productInfo.innerHTML = stock ? `<i class="bi bi-box me-1"></i>Available Stock: ${stock}` : '';
+                
+                // Update quantity input max attribute and validate current quantity
+                quantityInput.setAttribute('max', stock);
+                if (parseInt(quantityInput.value) > parseInt(stock)) {
+                    quantityInput.value = stock;
+                    showToast(`Quantity adjusted to available stock (${stock})`, 'warning');
+                }
+                
+                validateQuantity();
                 calculateItemTotal();
             } else {
                 priceInput.value = '';
                 productInfo.innerHTML = '';
+                quantityInput.removeAttribute('max');
             }
         });
 
-        quantityInput.addEventListener('input', calculateItemTotal);
+        quantityInput.addEventListener('input', function() {
+            validateQuantity();
+            calculateItemTotal();
+        });
+        
         priceInput.addEventListener('input', calculateItemTotal);
+
+        function validateQuantity() {
+            const selectedOption = productSelect.options[productSelect.selectedIndex];
+            const availableStock = parseInt(selectedOption.dataset.stock) || 0;
+            const requestedQuantity = parseInt(quantityInput.value) || 0;
+            
+            // Remove any existing validation classes
+            quantityInput.classList.remove('is-invalid', 'is-valid');
+            
+            if (selectedOption.value && availableStock > 0) {
+                if (requestedQuantity > availableStock) {
+                    quantityInput.classList.add('is-invalid');
+                    productInfo.innerHTML = `<i class="bi bi-exclamation-triangle text-danger me-1"></i>Requested quantity (${requestedQuantity}) exceeds available stock (${availableStock})`;
+                } else if (requestedQuantity > 0) {
+                    quantityInput.classList.add('is-valid');
+                    productInfo.innerHTML = `<i class="bi bi-box text-success me-1"></i>Available Stock: ${availableStock}`;
+                }
+            }
+        }
 
         removeButton.addEventListener('click', function() {
             if (itemsContainer.children.length > 1) {
@@ -493,6 +526,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('saleForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
+        // Validate stock before submission
+        const invalidQuantities = document.querySelectorAll('.quantity-input.is-invalid');
+        if (invalidQuantities.length > 0) {
+            showToast('Please correct the invalid quantities before submitting', 'error');
+            return;
+        }
+        
         const submitBtn = document.getElementById('submitBtn');
         const originalText = submitBtn.innerHTML;
         
@@ -517,7 +557,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.location.href = '{{ route("sales.index") }}';
                 }, 1500);
             } else {
-                showToast(data.message || 'Failed to create sale', 'error');
+                // Handle stock validation errors from server
+                if (data.errors && Array.isArray(data.errors)) {
+                    data.errors.forEach(error => {
+                        showToast(error, 'error');
+                    });
+                } else {
+                    showToast(data.message || 'Failed to create sale', 'error');
+                }
             }
         })
         .catch(error => {

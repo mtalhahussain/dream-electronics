@@ -32,7 +32,8 @@ class SendInstallmentReminderJob implements ShouldQueue
             $dueDate = Carbon::parse($this->installment->due_date);
             $amount = number_format((float) $this->installment->amount, 2);
 
-            $message = "Dear {$customer->name}, your installment of Rs. {$amount} is due on {$dueDate->format('d-M-Y')} for Sale #{$this->installment->sale->id}. Please ensure timely payment. - Dream Electronics";
+            $companyName = \App\Models\Setting::get('company_name', 'Dream Electronics');
+            $message = "Dear {$customer->name}, your installment of Rs. {$amount} is due on {$dueDate->format('d-M-Y')} for Sale #{$this->installment->sale->id}. Please ensure timely payment. - {$companyName}";
 
             // Initialize Twilio client
             $twilio = new Client(

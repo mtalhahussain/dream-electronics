@@ -78,6 +78,25 @@ class SaleController extends Controller
         try {
             DB::beginTransaction();
 
+            // Double-check stock availability before processing
+            $stockErrors = [];
+            foreach ($request->items as $index => $item) {
+                $product = Product::find($item['product_id']);
+                if ($product && $product->stock_quantity !== null) {
+                    if ($item['quantity'] > $product->stock_quantity) {
+                        $stockErrors[] = "Item " . ($index + 1) . ": {$product->name} - Requested quantity ({$item['quantity']}) exceeds available stock ({$product->stock_quantity})";
+                    }
+                }
+            }
+
+            if (!empty($stockErrors)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Insufficient stock for the following items:',
+                    'errors' => $stockErrors
+                ], 422);
+            }
+
             // Calculate net total
             $totalPrice = $request->total_price;
             $discountPercent = $request->discount_percent ?? 0;
@@ -112,9 +131,16 @@ class SaleController extends Controller
                     'total_price' => $item['quantity'] * $item['unit_price'],
                 ]);
 
-                // Decrement product stock
+                // Decrement product stock with safety check
                 $product = Product::find($item['product_id']);
-                $product->decrement('stock_quantity', $item['quantity']);
+                if ($product && $product->stock_quantity !== null) {
+                    if ($product->stock_quantity >= $item['quantity']) {
+                        $product->decrement('stock_quantity', $item['quantity']);
+                    } else {
+                        // This shouldn't happen due to earlier validation, but safety first
+                        throw new \Exception("Stock validation failed for product: {$product->name}");
+                    }
+                }
             }
 
             // Generate installments if there's remaining balance

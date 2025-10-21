@@ -4,12 +4,6 @@
 
 @section('content')
 <!-- KPI Cards -->
-@extends('layouts.admin')
-
-@section('title', 'Dashboard')
-
-@section('content')
-<!-- KPI Cards -->
 <div class="row g-4 mb-4">
     <div class="col-12 col-md-6 col-xl-3">
         <div class="card border-0 shadow-sm">
@@ -135,37 +129,6 @@
                     <i class="bi bi-calendar-check me-2"></i>Upcoming Installments
                 </h5>
                 <a href="{{ route('sales.index') }}" class="btn btn-outline-primary btn-sm">View All Sales</a>
-            </div>
-            
-            <!-- Filter Toolbar -->
-            <div class="card-body border-bottom bg-light">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <select class="form-select form-select-sm" id="branchFilter">
-                            <option value="">All Branches</option>
-                            <!-- Will be populated via AJAX or server-side -->
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select form-select-sm" id="statusFilter">
-                            <option value="">All Status</option>
-                            <option value="unpaid">Unpaid</option>
-                            <option value="partial">Partial</option>
-                            <option value="paid">Paid</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <input type="date" class="form-control form-control-sm" id="dateFilter" placeholder="Due Date">
-                    </div>
-                    <div class="col-md-3">
-                        <div class="input-group input-group-sm">
-                            <input type="text" class="form-control" placeholder="Search customer..." id="searchFilter">
-                            <button class="btn btn-outline-secondary" type="button">
-                                <i class="bi bi-search"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
             
             <div class="card-body p-0">
@@ -412,138 +375,5 @@
             submitBtn.innerHTML = 'Mark as Paid';
         });
     });
-</script>
-@endpush
-
-<!-- Charts -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <div class="bg-white rounded-lg shadow p-6">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Collections vs Expenses (Last 6 Months)</h3>
-        <canvas id="collectionsExpensesChart" height="300"></canvas>
-    </div>
-
-    <div class="bg-white rounded-lg shadow p-6">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Sales Status Split</h3>
-        <canvas id="salesStatusChart" height="300"></canvas>
-    </div>
-</div>
-
-<!-- Upcoming Installments Table -->
-<div class="bg-white rounded-lg shadow">
-    <div class="px-6 py-4 border-b border-gray-200">
-        <h3 class="text-lg font-medium text-gray-900">Upcoming Installments (Next 10)</h3>
-    </div>
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sale ID</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Branch</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                @forelse($upcomingInstallments as $installment)
-                <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <a href="{{ route('sales.show', $installment->sale_id) }}" class="text-blue-600 hover:text-blue-900">
-                            #{{ $installment->sale_id }}
-                        </a>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $installment->customer_name }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $installment->branch_name }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ \Carbon\Carbon::parse($installment->due_date)->format('M d, Y') }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rs. {{ number_format($installment->amount, 2) }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            {{ $installment->status === 'unpaid' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800' }}">
-                            {{ ucfirst($installment->status) }}
-                        </span>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No upcoming installments found.</td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-</div>
-@endsection
-
-@push('scripts')
-<script>
-// Chart.js initialization
-document.addEventListener('DOMContentLoaded', function() {
-    // Collections vs Expenses Chart
-    const collectionsExpensesCtx = document.getElementById('collectionsExpensesChart').getContext('2d');
-    new Chart(collectionsExpensesCtx, {
-        type: 'bar',
-        data: {
-            labels: @json($monthsLabels),
-            datasets: [{
-                label: 'Collections',
-                data: @json($collectionsSeries),
-                backgroundColor: 'rgba(34, 197, 94, 0.8)',
-                borderColor: 'rgb(34, 197, 94)',
-                borderWidth: 1
-            }, {
-                label: 'Expenses',
-                data: @json($expensesSeries),
-                backgroundColor: 'rgba(239, 68, 68, 0.8)',
-                borderColor: 'rgb(239, 68, 68)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
-
-    // Sales Status Chart
-    const salesStatusCtx = document.getElementById('salesStatusChart').getContext('2d');
-    const salesStatusData = @json($salesStatusSplit);
-    new Chart(salesStatusCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Active', 'Completed', 'Defaulted', 'Cancelled'],
-            datasets: [{
-                data: [
-                    salesStatusData.active,
-                    salesStatusData.completed,
-                    salesStatusData.defaulted,
-                    salesStatusData.cancelled
-                ],
-                backgroundColor: [
-                    'rgba(59, 130, 246, 0.8)',
-                    'rgba(34, 197, 94, 0.8)',
-                    'rgba(239, 68, 68, 0.8)',
-                    'rgba(156, 163, 175, 0.8)'
-                ],
-                borderColor: [
-                    'rgb(59, 130, 246)',
-                    'rgb(34, 197, 94)',
-                    'rgb(239, 68, 68)',
-                    'rgb(156, 163, 175)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
-        }
-    });
-});
 </script>
 @endpush

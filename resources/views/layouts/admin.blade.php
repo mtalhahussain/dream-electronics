@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Dashboard') - Dream Electronics</title>
+    <title>@yield('title', 'Dashboard') - {{ $globalCompanyName ?? 'Dream Electronics' }}</title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -18,17 +18,32 @@
             width: 250px;
             min-height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 1050; /* Higher z-index for mobile */
+            overflow-y: auto; /* Make sidebar scrollable */
+            max-height: 100vh; /* Limit height for scrolling */
         }
         .sidebar .nav-link {
             color: rgba(255,255,255,0.8);
             padding: 0.75rem 1.25rem;
             border-radius: 0.375rem;
             margin: 0.125rem 0.5rem;
+            transition: all 0.3s ease;
         }
         .sidebar .nav-link:hover,
         .sidebar .nav-link.active {
             color: #fff;
             background-color: rgba(255,255,255,0.1);
+        }
+        .sidebar .sub-nav {
+            background-color: rgba(0,0,0,0.1);
+            border-radius: 0.375rem;
+            margin: 0.25rem 0.5rem;
+            padding: 0.5rem 0;
+        }
+        .sidebar .sub-nav .nav-link {
+            padding: 0.5rem 1.5rem;
+            font-size: 0.875rem;
+            margin: 0.125rem 0.25rem;
         }
         .main-content {
             margin-left: 250px;
@@ -40,31 +55,60 @@
             }
             .sidebar {
                 margin-left: -250px;
+                position: fixed;
+                z-index: 1055; /* Even higher z-index for mobile overlay */
             }
             .sidebar.show {
                 margin-left: 0;
+            }
+            .sidebar-backdrop {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.5);
+                z-index: 1050;
+                display: none;
+            }
+            .sidebar-backdrop.show {
+                display: block;
             }
         }
     </style>
 </head>
 <body class="bg-light">
+    <!-- Mobile Sidebar Backdrop -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+    
     <!-- Sidebar -->
     <div class="sidebar position-fixed top-0 start-0 d-flex flex-column p-3" id="sidebar">
         <div class="d-flex align-items-center mb-3 text-white">
             <i class="bi bi-lightning-charge-fill fs-3 me-2"></i>
-            <span class="fs-5 fw-bold">Dream Electronics</span>
+            <span class="fs-5 fw-bold">{{ $globalCompanyName ?? 'Dream Electronics' }}</span>
         </div>
         
         <nav class="nav nav-pills flex-column flex-nowrap overflow-hidden">
             <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
                 <i class="bi bi-speedometer2 me-2"></i>Dashboard
             </a>
-            <a class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}" href="{{ route('products.index') }}">
-                <i class="bi bi-box-seam me-2"></i>Products
-            </a>
-            <a class="nav-link {{ request()->routeIs('categories.*') ? 'active' : '' }}" href="{{ route('categories.index') }}">
-                <i class="bi bi-tags me-2"></i>Categories
-            </a>
+            
+            <!-- Products Section -->
+            <div class="nav-item">
+                <a class="nav-link {{ request()->routeIs('products.*') || request()->routeIs('categories.*') ? 'active' : '' }}" href="#" onclick="toggleSubMenu('productsSubMenu')">
+                    <i class="bi bi-box-seam me-2"></i>Products
+                    <i class="bi bi-chevron-down float-end"></i>
+                </a>
+                <div class="sub-nav {{ request()->routeIs('products.*') || request()->routeIs('categories.*') ? '' : 'd-none' }}" id="productsSubMenu">
+                    <a class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}" href="{{ route('products.index') }}">
+                        <i class="bi bi-box me-2"></i>Manage Products
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('categories.*') ? 'active' : '' }}" href="{{ route('categories.index') }}">
+                        <i class="bi bi-tags me-2"></i>Manage Categories
+                    </a>
+                </div>
+            </div>
+            
             <a class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}" href="{{ route('customers.index') }}">
                 <i class="bi bi-people me-2"></i>Customers
             </a>
@@ -74,29 +118,32 @@
             <a class="nav-link {{ request()->routeIs('sales.installments') ? 'active' : '' }}" href="{{ route('sales.installments') }}">
                 <i class="bi bi-calendar-check me-2"></i>Installments
             </a>
-            <a class="nav-link {{ request()->routeIs('finance.*') || request()->routeIs('expenses.*') || request()->routeIs('stock-credits.*') || request()->routeIs('salary-payments.*') ? 'active' : '' }}" href="{{ route('finance.index') }}">
-                <i class="bi bi-graph-up me-2"></i>Finance
-            </a>
             
-            <!-- Finance Sub-menu -->
-            @if(request()->routeIs('finance.*') || request()->routeIs('expenses.*') || request()->routeIs('stock-credits.*') || request()->routeIs('salary-payments.*'))
-            <div class="ms-3 mb-2">
-                <a class="nav-link {{ request()->routeIs('expenses.*') ? 'active' : '' }} small" href="{{ route('expenses.index') }}">
-                    <i class="bi bi-receipt me-2"></i>Manage Expenses
+            <!-- Finance Section -->
+            <div class="nav-item">
+                <a class="nav-link {{ request()->routeIs('finance.*') || request()->routeIs('expenses.*') || request()->routeIs('stock-credits.*') || request()->routeIs('salary-payments.*') ? 'active' : '' }}" href="#" onclick="toggleSubMenu('financeSubMenu')">
+                    <i class="bi bi-graph-up me-2"></i>Finance
+                    <i class="bi bi-chevron-down float-end"></i>
                 </a>
-                <a class="nav-link {{ request()->routeIs('stock-credits.*') ? 'active' : '' }} small" href="{{ route('stock-credits.index') }}">
-                    <i class="bi bi-box me-2"></i>Manage Stock Credits
-                </a>
-                <a class="nav-link {{ request()->routeIs('salary-payments.*') ? 'active' : '' }} small" href="{{ route('salary-payments.index') }}">
-                    <i class="bi bi-people me-2"></i>Manage Salaries
-                </a>
+                <div class="sub-nav {{ request()->routeIs('finance.*') || request()->routeIs('expenses.*') || request()->routeIs('stock-credits.*') || request()->routeIs('salary-payments.*') ? '' : 'd-none' }}" id="financeSubMenu">
+                    <a class="nav-link {{ request()->routeIs('finance.index') ? 'active' : '' }}" href="{{ route('finance.index') }}">
+                        <i class="bi bi-bar-chart me-2"></i>Finance Overview
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('expenses.*') ? 'active' : '' }}" href="{{ route('expenses.index') }}">
+                        <i class="bi bi-receipt me-2"></i>Manage Expenses
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('stock-credits.*') ? 'active' : '' }}" href="{{ route('stock-credits.index') }}">
+                        <i class="bi bi-box me-2"></i>Manage Stock
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('salary-payments.*') ? 'active' : '' }}" href="{{ route('salary-payments.index') }}">
+                        <i class="bi bi-people me-2"></i>Manage Salaries
+                    </a>
+                </div>
             </div>
-            @endif
+            
             <a class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}" href="{{ route('employees.index') }}">
                 <i class="bi bi-person-badge me-2"></i>Employees
             </a>
-            
-           
             <a class="nav-link {{ request()->routeIs('branches.*') ? 'active' : '' }}" href="{{ route('branches.index') }}">
                 <i class="bi bi-building me-2"></i>Branches
             </a>
@@ -163,7 +210,7 @@
         <footer class="bg-white border-top mt-5 py-3">
             <div class="container-fluid">
                 <div class="text-center text-muted">
-                    <small>&copy; {{ date('Y') }} Dream Electronics. All rights reserved.</small>
+                    <small>&copy; {{ date('Y') }} {{ $globalCompanyName ?? 'Dream Electronics' }}. All rights reserved.</small>
                 </div>
             </div>
         </footer>
@@ -181,8 +228,56 @@
     
     <script>
         function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('show');
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            
+            sidebar.classList.toggle('show');
+            backdrop.classList.toggle('show');
         }
+        
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            
+            sidebar.classList.remove('show');
+            backdrop.classList.remove('show');
+        }
+        
+        function toggleSubMenu(subMenuId) {
+            const subMenu = document.getElementById(subMenuId);
+            const chevron = event.currentTarget.querySelector('.bi-chevron-down, .bi-chevron-up');
+            
+            if (subMenu.classList.contains('d-none')) {
+                subMenu.classList.remove('d-none');
+                if (chevron) {
+                    chevron.classList.remove('bi-chevron-down');
+                    chevron.classList.add('bi-chevron-up');
+                }
+            } else {
+                subMenu.classList.add('d-none');
+                if (chevron) {
+                    chevron.classList.remove('bi-chevron-up');
+                    chevron.classList.add('bi-chevron-down');
+                }
+            }
+            
+            // Prevent navigation
+            event.preventDefault();
+            return false;
+        }
+        
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const navbarToggler = document.querySelector('.navbar-toggler');
+            
+            if (window.innerWidth <= 991.98 && 
+                sidebar.classList.contains('show') && 
+                !sidebar.contains(event.target) && 
+                !navbarToggler.contains(event.target)) {
+                closeSidebar();
+            }
+        });
         
         function showToast(message, type = 'success') {
             const toastContainer = document.getElementById('toastContainer');

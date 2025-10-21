@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Expense;
 use App\Models\Branch;
+use App\Models\FinanceTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -56,13 +57,25 @@ class ExpenseController extends Controller
             $receiptPath = $request->file('receipt')->store('receipts', 'public');
         }
 
-        Expense::create([
+        $expense = Expense::create([
             'branch_id' => $request->branch_id,
             'category' => $request->category,
             'description' => $request->description,
             'amount' => $request->amount,
             'expense_date' => $request->expense_date,
             'receipt_path' => $receiptPath
+        ]);
+
+        // Create corresponding finance transaction
+        FinanceTransaction::create([
+            'branch_id' => $request->branch_id,
+            'type' => 'out',
+            'category' => $request->category,
+            'description' => $request->description,
+            'amount' => $request->amount,
+            'reference_type' => 'App\Models\Expense',
+            'reference_id' => $expense->id,
+            'transaction_date' => $request->expense_date
         ]);
 
         return response()->json([
@@ -100,6 +113,33 @@ class ExpenseController extends Controller
             'receipt_path' => $receiptPath
         ]);
 
+        // Update corresponding finance transaction
+        $financeTransaction = FinanceTransaction::where('reference_type', 'App\Models\Expense')
+            ->where('reference_id', $expense->id)
+            ->first();
+
+        if ($financeTransaction) {
+            $financeTransaction->update([
+                'branch_id' => $request->branch_id,
+                'category' => $request->category,
+                'description' => $request->description,
+                'amount' => $request->amount,
+                'transaction_date' => $request->expense_date
+            ]);
+        } else {
+            // Create finance transaction if it doesn't exist
+            FinanceTransaction::create([
+                'branch_id' => $request->branch_id,
+                'type' => 'out',
+                'category' => $request->category,
+                'description' => $request->description,
+                'amount' => $request->amount,
+                'reference_type' => 'App\Models\Expense',
+                'reference_id' => $expense->id,
+                'transaction_date' => $request->expense_date
+            ]);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Expense updated successfully!'
@@ -111,6 +151,11 @@ class ExpenseController extends Controller
         if ($expense->receipt_path) {
             Storage::disk('public')->delete($expense->receipt_path);
         }
+
+        // Delete corresponding finance transaction
+        FinanceTransaction::where('reference_type', 'App\Models\Expense')
+            ->where('reference_id', $expense->id)
+            ->delete();
 
         $expense->delete();
 

@@ -7,7 +7,7 @@
             </div>
         </div>
         <p class="text-muted text-center small">
-            Create a new secure password for your Dream Electronics account.
+            Create a new secure password for your {{ \App\Models\Setting::get('company_name', 'Dream Electronics') }} account.
         </p>
     </div>
 

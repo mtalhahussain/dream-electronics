@@ -172,7 +172,7 @@
                                 <div class="company-logo">
                                     <i class="bi bi-lightning-charge"></i>
                                 </div>
-                                <h1 class="h3">Dream Electronics</h1>
+                                <h1 class="h3">{{ \App\Models\Setting::get('company_name', 'Dream Electronics') }}</h1>
                                 <p class="text-muted">Multi-Branch Electronics Management</p>
                             </div>
                             {{ $slot }}

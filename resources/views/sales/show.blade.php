@@ -134,7 +134,7 @@
                                 <a href="{{ route('sales.index') }}" class="btn btn-light btn-sm action-btn">
                                     <i class="bi bi-arrow-left me-2"></i>Back to Sales
                                 </a>
-                                <button class="btn btn-outline-light btn-sm action-btn" onclick="printSale()">
+                                <button class="btn btn-outline-dark btn-sm action-btn" onclick="printSale()">
                                     <i class="bi bi-printer me-2"></i>Print
                                 </button>
                             </div>

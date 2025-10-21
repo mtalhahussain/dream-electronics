@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="mb-4">
         <h2 class="h4 text-center mb-2">Create Account</h2>
-        <p class="text-muted text-center small">Join Dream Electronics Management System</p>
+        <p class="text-muted text-center small">Join {{ \App\Models\Setting::get('company_name', 'Dream Electronics') }} Management System</p>
     </div>
 
     <form method="POST" action="{{ route('register') }}">

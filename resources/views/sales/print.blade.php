@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sale Invoice #{{ $sale->id }} - Dream Electronics</title>
+    <title>Sale Invoice #{{ $sale->id }} - {{ $globalCompanyName ?? 'Dream Electronics' }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         @media print {
@@ -205,7 +205,7 @@
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Actual Advance:</span>
-                    <span class="detail-value">{{ number_format($sale->advance_payment) }}</span>
+                    <span class="detail-value">{{ number_format($sale->advance_received) }}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Processing Fee:</span>
@@ -226,12 +226,14 @@
         <table class="products-table">
             <thead>
                 <tr>
-                    <th style="width: 10%;">Sr#</th>
-                    <th style="width: 30%;">Items</th>
-                    <th style="width: 20%;">Model</th>
-                    <th style="width: 15%;">Brand</th>
-                    <th style="width: 10%;">Qty</th>
-                    <th style="width: 15%;">Serial No</th>
+                    <th style="width: 8%;">Sr#</th>
+                    <th style="width: 25%;">Items</th>
+                    <th style="width: 15%;">Model</th>
+                    <th style="width: 12%;">Brand</th>
+                    <th style="width: 8%;">Qty</th>
+                    <th style="width: 12%;">Unit Price</th>
+                    <th style="width: 12%;">Total</th>
+                    <th style="width: 8%;">Serial No</th>
                 </tr>
             </thead>
             <tbody>
@@ -242,20 +244,29 @@
                     <td>{{ $item->product->model ?? 'N/A' }}</td>
                     <td>{{ $item->product->brand ?? 'Generic' }}</td>
                     <td class="text-center">{{ $item->quantity }}</td>
-                    <td>{{ $item->product->serial_number ?? 'N/A' }}</td>
+                    <td class="text-right">{{ number_format($item->unit_price) }}</td>
+                    <td class="text-right">{{ number_format($item->total_price) }}</td>
+                    <td class="text-center">{{ $item->product->serial_number ?? 'N/A' }}</td>
                 </tr>
                 @endforeach
-                @if($sale->saleItems->count() < 3)
-                    @for($i = $sale->saleItems->count(); $i < 3; $i++)
-                    <tr>
-                        <td class="text-center">{{ $i + 1 }}</td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                    </tr>
-                    @endfor
+                @if($sale->saleItems->count() > 0)
+                <tr style="border-top: 2px solid #000; font-weight: bold;">
+                    <td colspan="6" class="text-right"><strong>Grand Total:</strong></td>
+                    <td class="text-right"><strong>{{ number_format($sale->total_price) }}</strong></td>
+                    <td></td>
+                </tr>
+                @if($sale->discount_percent > 0)
+                <tr>
+                    <td colspan="6" class="text-right">Discount ({{ $sale->discount_percent }}%):</td>
+                    <td class="text-right">-{{ number_format(($sale->total_price * $sale->discount_percent) / 100) }}</td>
+                    <td></td>
+                </tr>
+                <tr style="font-weight: bold;">
+                    <td colspan="6" class="text-right"><strong>Net Total:</strong></td>
+                    <td class="text-right"><strong>{{ number_format($sale->net_total ?? $sale->total_price) }}</strong></td>
+                    <td></td>
+                </tr>
+                @endif
                 @endif
             </tbody>
         </table>
